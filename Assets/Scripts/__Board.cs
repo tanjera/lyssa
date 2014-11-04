@@ -13,7 +13,7 @@ public class __Board : MonoBehaviour {
 	List<int> _count_Rows = new List<int> (); // index = column #; some columns may have different amount of rows than others
 	List<Transform> _Item_Positions = new List<Transform> ();
 
-	List<__Item> _Items = new List<__Item>();
+	List<__Board_Item.__Item> _Items = new List<__Board_Item.__Item>();
 
 	void Start() {
 		_Game_Handler = (__Game_Handler)GameObject.FindObjectOfType (typeof(__Game_Handler));
@@ -42,10 +42,11 @@ public class __Board : MonoBehaviour {
 
 
 	void Populate_Board() {
+		Transform itemParent = transform.FindChild ("__Items");
 		_Item_Positions.ForEach (delegate(Transform obj) {
-			__Item eachItem;
+			__Board_Item.__Item eachItem;
 			/* ****** TO-DO: RANDOMIZE whether to create stones, items, special power ups, w/e */
-			eachItem = Create_Stone__Random ();
+			eachItem = Create_Stone__Random (itemParent);
 
 			// Place the item on the board, locate it on a row & column, and activate
 			eachItem._Object.transform.Translate (obj.position);
@@ -63,33 +64,31 @@ public class __Board : MonoBehaviour {
 	}
 
 	void Update_Board() {
-
-		// Fill any empty spaces by dropping gems down in their columns
+		// Fill any empty spaces by dropping gems down in their _Columns
 		for (int i = 0; i <= _count_Columns; i++) {
 			// Grab a list of all _Items in each column, parsing column by column in a buffer
-			List<__Item> colArray = _Items.FindAll (x => x._Column == i);
-			colArray.Sort(delegate(__Item x, __Item y) { return x._Row.CompareTo(y._Row); });
-
+			List<__Board_Item.__Item> colArray = _Items.FindAll (x => x._Column == i);
+			colArray.Sort(delegate(__Board_Item.__Item x, __Board_Item.__Item y) { return x._Row.CompareTo(y._Row); });
 			// Now parse row by row ascending from the *second from* bottom row to check for holes in that column
-			for (int j = 0; j < colArray.Count; j++) { 
+			for (int j = 0; j < colArray.Count; j++) {
 				// If there is space between this item and the one two items down...
 				// Or if this is the first item but is not in the bottom row...
-				if ((j > 0 && colArray[j]._Row - 1 >= 0 && colArray[j-1]._Row < colArray[j]._Row - 1) 
+                if ((j > 0 && colArray[j]._Row - 1 >= 0 && colArray[j-1]._Row < colArray[j]._Row - 1) 
 				    || (j == 0 && colArray[j]._Row > 0)) {
-					colArray[j]._Row--;	// Adjust the temporary column buffer accordingly
-					Vector3 target = _Item_Positions.Find (obj 
-	                       => colArray[j]._Row == int.Parse (obj.name.Split (new char[] {';'}) [0]) 
+                    Vector3 target = _Item_Positions.Find (obj 
+	                       => colArray[j]._Row - 1 == int.Parse (obj.name.Split (new char[] {';'}) [0]) 
 	                       && colArray[j]._Column == int.Parse (obj.name.Split (new char[] {';'}) [1]))
 						.position;
-					colArray[j]._Object.transform.position = target;
-						// And move the actual _Item
-					j = (j - 3 < 1) ? j : j -= 3; // And scoot backwards in the buffer in case there are consecutive holes
-				} 
-			}
-		}
+                    // And move the actual _Item
+                    _Game_Handler.Move_Smooth(colArray[j]._Object.transform, target, 0.1f);
+                    colArray[j]._Row--; // And set the _Item to be one row down
+                    j--; // And recurse the same _Item again
+				}
+            }
+        }
 	}
 
-	public void Destroy_Item(__Item incItem) {
+	public void Destroy_Item(__Board_Item.__Item incItem) {
 		_Items.Remove (incItem);
 		GameObject.Destroy (incItem._Object);
 
@@ -101,48 +100,36 @@ public class __Board : MonoBehaviour {
 
 	/* Definitions and functions for individual stones, creation, etc */
 
-	public class __Item {
-		public enum __Type {
-			Stone,
-			Consumable,
-			Equipment
-		}
+	// Prototypes for 9-sided stones
+	public GameObject 
+		proto_Stone_9_Black, 
+		proto_Stone_9_Blue, 
+		proto_Stone_9_Green,
+		proto_Stone_9_Purple,
+		proto_Stone_9_Red, 
+		proto_Stone_9_White,
+		proto_Stone_9_Yellow;
 
-		public enum __Color {
-			Black,
-			Blue,
-			Green,
-			Red,
-			White
-		}
-		
-		public __Type _Type;
-		public __Color _Color;
-		public GameObject _Object;
 
-		public int _Column;
-		public int _Row;
-	}
-	
-	public GameObject __Stone_Prototype__Black, __Stone_Prototype__Blue, __Stone_Prototype__Green,
-	__Stone_Prototype__Red, __Stone_Prototype__White;
-
-	__Item Create_Stone__Random() {
-		__Item thisStone = new __Item ();
-
-		thisStone._Type = __Item.__Type.Stone;
-		thisStone._Color = (__Item.__Color)UnityEngine.Random.Range (0, Enum.GetNames (typeof(__Item.__Color)).Length);
+	// Create and return a random stone
+	public __Board_Item.__Item Create_Stone__Random(Transform incParent) {
+		__Board_Item.__Item thisStone = new __Board_Item.__Item ();
+		thisStone._Type = __Board_Item.__Item.__Type.Stone;
+		thisStone._Color = (__Board_Item.__Item.__Color)UnityEngine.Random.Range (0, Enum.GetNames (typeof(__Board_Item.__Item.__Color)).Length);
 		
 		switch (thisStone._Color) {
 		default:
-		case __Item.__Color.Black: thisStone._Object = (GameObject)GameObject.Instantiate(__Stone_Prototype__Black); break;
-		case __Item.__Color.Blue: thisStone._Object = (GameObject)GameObject.Instantiate(__Stone_Prototype__Blue); break;
-		case __Item.__Color.Green: thisStone._Object = (GameObject)GameObject.Instantiate(__Stone_Prototype__Green); break;
-		case __Item.__Color.Red: thisStone._Object = (GameObject)GameObject.Instantiate(__Stone_Prototype__Red); break;
-		case __Item.__Color.White: thisStone._Object = (GameObject)GameObject.Instantiate(__Stone_Prototype__White); break;
+		case __Board_Item.__Item.__Color.Black: thisStone._Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Black); break;
+		case __Board_Item.__Item.__Color.Blue: thisStone._Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Blue); break;
+		case __Board_Item.__Item.__Color.Green: thisStone._Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Green); break;
+		case __Board_Item.__Item.__Color.Purple: thisStone._Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Purple); break;
+		case __Board_Item.__Item.__Color.Red: thisStone._Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Red); break;
+		case __Board_Item.__Item.__Color.White: thisStone._Object = (GameObject)GameObject.Instantiate(proto_Stone_9_White); break;
+		case __Board_Item.__Item.__Color.Yellow: thisStone._Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Yellow); break;
 		}
 		
-		thisStone._Object.transform.parent = this.transform;
+		thisStone._Object.transform.parent = incParent;
 		return thisStone;
 	}
+
 }
