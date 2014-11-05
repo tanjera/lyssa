@@ -5,9 +5,8 @@ using System.Collections.Generic;
 
 public class Game_Handler : MonoBehaviour {
 
-	public Board _Board;
-	public Player _Player;
-
+    public Board Board;
+    public Player Player;
 
     class Movement {
         float Time;
@@ -44,6 +43,9 @@ public class Game_Handler : MonoBehaviour {
 
     List<Movement> Movement_Buffer = new List<Movement>();
 
+    void Start() {
+        Player = new Player();
+    }
     void Update() {
         //Process the movement buffer for items needing translation over time, remove if complete
         Movement_Buffer.ForEach(obj => { if (obj.Move_Smooth()) Movement_Buffer.Remove(obj); });

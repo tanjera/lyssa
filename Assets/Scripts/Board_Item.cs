@@ -15,18 +15,8 @@ public class Board_Item : MonoBehaviour {
 			Equipment
 		}
 		
-		public enum Colors {
-			Black,
-			Blue,
-			Green,
-			Purple,
-			Red,
-			White,
-			Yellow
-		}
-		
 		public Types Type;
-		public Colors Color;
+		public Definitions.Mana_Colors Color;
 		public GameObject Object;
 		
 		public int Column;

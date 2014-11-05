@@ -13,7 +13,7 @@ public class Board : MonoBehaviour {
 	List<int> amountRows = new List<int> (); // index = column #; some columns may have different amount of rows than others
 	List<Transform> itemPositions = new List<Transform> ();
 
-	List<Board_Item.Item> Items = new List<Board_Item.Item>();
+	List<Board_Item.Item> listItems = new List<Board_Item.Item>();
 
 	void Start() {
 		Game_Handler = (Game_Handler)GameObject.FindObjectOfType (typeof(Game_Handler));
@@ -59,7 +59,7 @@ public class Board : MonoBehaviour {
 			eachBoardItem.This = eachItem;
 			eachBoardItem.Board = this;
 
-			Items.Add (eachItem);
+			listItems.Add (eachItem);
 		});
 	}
 
@@ -67,7 +67,7 @@ public class Board : MonoBehaviour {
 		// Fill any empty spaces by dropping gems down in their _Columns
 		for (int i = 0; i <= amountColumns; i++) {
 			// Grab a list of all _Items in each column, parsing column by column in a buffer
-			List<Board_Item.Item> bufColumns = Items.FindAll (x => x.Column == i);
+			List<Board_Item.Item> bufColumns = listItems.FindAll (x => x.Column == i);
 			bufColumns.Sort(delegate(Board_Item.Item x, Board_Item.Item y) { return x.Row.CompareTo(y.Row); });
 			// Now parse row by row ascending from the *second from* bottom row to check for holes in that column
 			for (int j = 0; j < bufColumns.Count; j++) {
@@ -89,8 +89,32 @@ public class Board : MonoBehaviour {
 	}
 
 	public void Destroy_Item(Board_Item.Item incItem) {
-		Items.Remove (incItem);
-		GameObject.Destroy (incItem.Object);
+        Game_Handler.Player.Add_Mana(incItem.Color, 1);
+
+        if (incItem.Color == Definitions.Mana_Colors.Black)
+            Game_Handler.Player.Character.Add_Level(1);
+        else if (incItem.Color == Definitions.Mana_Colors.White)
+            Game_Handler.Player.Character.Add_Level(10);
+
+        Debug.Log(String.Format(
+            "L{0}: {1} / {2} HP;  Bk {3} / Bl {4} / G {5} / P {6} / R {7} / W {8} / Y {9}",
+
+            Game_Handler.Player.Character.Level,
+
+            Game_Handler.Player.Character.Health_Current,
+            Game_Handler.Player.Character.Health_Max,
+
+            Game_Handler.Player.Mana(Definitions.Mana_Colors.Black),
+            Game_Handler.Player.Mana(Definitions.Mana_Colors.Blue),
+            Game_Handler.Player.Mana(Definitions.Mana_Colors.Green),
+            Game_Handler.Player.Mana(Definitions.Mana_Colors.Purple),
+            Game_Handler.Player.Mana(Definitions.Mana_Colors.Red),
+            Game_Handler.Player.Mana(Definitions.Mana_Colors.White),
+            Game_Handler.Player.Mana(Definitions.Mana_Colors.Yellow)
+            ));
+
+        listItems.Remove(incItem);
+        GameObject.Destroy (incItem.Object);
 
 		Update_Board ();
 		Count_Rows_and_Columns ();
@@ -115,17 +139,17 @@ public class Board : MonoBehaviour {
 	public Board_Item.Item Create_Stone__Random(Transform incParent) {
 		Board_Item.Item thisStone = new Board_Item.Item ();
 		thisStone.Type = Board_Item.Item.Types.Stone;
-		thisStone.Color = (Board_Item.Item.Colors)UnityEngine.Random.Range (0, Enum.GetNames (typeof(Board_Item.Item.Colors)).Length);
+		thisStone.Color = (Definitions.Mana_Colors)UnityEngine.Random.Range (0, Enum.GetNames (typeof(Definitions.Mana_Colors)).Length);
 		
 		switch (thisStone.Color) {
 		default:
-		case Board_Item.Item.Colors.Black: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Black); break;
-		case Board_Item.Item.Colors.Blue: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Blue); break;
-		case Board_Item.Item.Colors.Green: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Green); break;
-		case Board_Item.Item.Colors.Purple: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Purple); break;
-		case Board_Item.Item.Colors.Red: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Red); break;
-		case Board_Item.Item.Colors.White: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_White); break;
-		case Board_Item.Item.Colors.Yellow: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Yellow); break;
+		case Definitions.Mana_Colors.Black: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Black); break;
+        case Definitions.Mana_Colors.Blue: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Blue); break;
+        case Definitions.Mana_Colors.Green: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Green); break;
+        case Definitions.Mana_Colors.Purple: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Purple); break;
+        case Definitions.Mana_Colors.Red: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Red); break;
+		case Definitions.Mana_Colors.White: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_White); break;
+        case Definitions.Mana_Colors.Yellow: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Yellow); break;
 		}
 		
 		thisStone.Object.transform.parent = incParent;
