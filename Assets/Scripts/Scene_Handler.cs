@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class __Skills : MonoBehaviour {
+public class Scene_Handler : MonoBehaviour {
 	
 }

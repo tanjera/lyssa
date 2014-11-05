@@ -3,19 +3,19 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class __Game_Handler : MonoBehaviour {
+public class Game_Handler : MonoBehaviour {
 
-	public __Board _Board;
-	public __Player _Player;
+	public Board _Board;
+	public Player _Player;
 
 
-    class __Movement {
+    class Movement {
         float Time;
         Transform Transform;
         Vector3 Target,
             Velocity = Vector3.zero;
 
-        public __Movement(Transform incTransform, Vector3 incTarget, float incTime) {
+        public Movement(Transform incTransform, Vector3 incTarget, float incTime) {
             Transform = incTransform;
             Target = incTarget;
             Time = incTime;
@@ -42,7 +42,7 @@ public class __Game_Handler : MonoBehaviour {
     }
 
 
-    List<__Movement> Movement_Buffer = new List<__Movement>();
+    List<Movement> Movement_Buffer = new List<Movement>();
 
     void Update() {
         //Process the movement buffer for items needing translation over time, remove if complete
@@ -52,7 +52,7 @@ public class __Game_Handler : MonoBehaviour {
     public void Move_Smooth(Transform incTransform, Vector3 incTarget, float incTime) {
         // If this object is *not* already being moved...
         if (Movement_Buffer.Find(obj => obj._Transform == incTransform) == null)
-            Movement_Buffer.Add(new __Movement(incTransform, incTarget, incTime)); // Then move it!
+            Movement_Buffer.Add(new Movement(incTransform, incTarget, incTime)); // Then move it!
         else
             Movement_Buffer.Find(obj => obj._Transform == incTransform).Modify(incTarget, incTime);
 
