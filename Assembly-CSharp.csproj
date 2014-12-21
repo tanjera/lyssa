@@ -46,6 +46,8 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Drag Rigidbody\CameraPlane.cs" />
+     <Compile Include="Assets\Drag Rigidbody\Drag_Item.cs" />
      <Compile Include="Assets\Scripts\Board.cs" />
      <Compile Include="Assets\Scripts\Board_Item.cs" />
      <Compile Include="Assets\Scripts\Characters.cs" />

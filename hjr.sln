@@ -5,6 +5,8 @@ Project("{A6B77086-7F2A-3513-CE8C-F087B880EBE6}") = "hjr", "Assembly-CSharp.cspr
 EndProject
 Project("{A6B77086-7F2A-3513-CE8C-F087B880EBE6}") = "hjr", "Assembly-CSharp-Editor.csproj", "{A4162939-F2DA-3E9D-7291-924E42F01151}"
 EndProject
+Project("{A6B77086-7F2A-3513-CE8C-F087B880EBE6}") = "hjr", "Assembly-UnityScript-Editor.unityproj", "{9008B0B3-F2A8-10D9-B825-237BBDED6FD3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,11 +21,15 @@ Global
 		{A4162939-F2DA-3E9D-7291-924E42F01151}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4162939-F2DA-3E9D-7291-924E42F01151}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A4162939-F2DA-3E9D-7291-924E42F01151}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9008B0B3-F2A8-10D9-B825-237BBDED6FD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9008B0B3-F2A8-10D9-B825-237BBDED6FD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9008B0B3-F2A8-10D9-B825-237BBDED6FD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9008B0B3-F2A8-10D9-B825-237BBDED6FD3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(MonoDevelopProperties) = preSolution
+									GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = Assembly-CSharp.csproj
 		Policies = $0
 		$0.TextStylePolicy = $1
@@ -41,4 +47,5 @@ Global
 		$3.inheritsScope = text/plain
 		$3.scope = text/plain
 	EndGlobalSection
+
 EndGlobal

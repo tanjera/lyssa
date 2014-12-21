@@ -40,14 +40,25 @@ public class Game_Handler : MonoBehaviour {
         { get { return Transform; } }
     }
 
-
+    Board_Item.Items Item_Drag_Buffer;
     List<Movement> Movement_Buffer = new List<Movement>();
 
     void Start() {
         Player = new Player();
     }
     void Update() {
-        //Process the movement buffer for items needing translation over time, remove if complete
+    }
+
+    void FixedUpdate() {
+        /* Motion buffer stacks */
+
+        if (Item_Drag_Buffer != null) {
+            Vector3 vectorTranslate = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            vectorTranslate -= Item_Drag_Buffer.Object.transform.position;
+            vectorTranslate.z = 0; // Lock in Z axis...
+            Item_Drag_Buffer.Object.transform.Translate(vectorTranslate); 
+        }
+        
         Movement_Buffer.ForEach(obj => { if (obj.Move_Smooth()) Movement_Buffer.Remove(obj); });
     }
 

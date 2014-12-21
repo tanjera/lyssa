@@ -13,7 +13,7 @@ public class Board : MonoBehaviour {
 	List<int> amountRows = new List<int> (); // index = column #; some columns may have different amount of rows than others
 	List<Transform> itemPositions = new List<Transform> ();
 
-	List<Board_Item.Item> listItems = new List<Board_Item.Item>();
+	List<Board_Item.Items> listItems = new List<Board_Item.Items>();
 
 	void Start() {
 		Game_Handler = (Game_Handler)GameObject.FindObjectOfType (typeof(Game_Handler));
@@ -21,6 +21,13 @@ public class Board : MonoBehaviour {
 		Count_Rows_and_Columns ();
 		Populate_Board ();
 	}
+
+    void FixedUpdate() {
+        if (Input.GetMouseButtonUp(0)) {
+            Update_Board();
+            Count_Rows_and_Columns();
+        }
+    }
 
 	void Count_Rows_and_Columns() {
 		// Run through all __Item_Positions and determine the total number of rows and columns to minimize future recursing
@@ -44,7 +51,7 @@ public class Board : MonoBehaviour {
 	void Populate_Board() {
 		Transform itemParent = transform.FindChild ("__Items");
 		itemPositions.ForEach (delegate(Transform obj) {
-			Board_Item.Item eachItem;
+			Board_Item.Items eachItem;
 			/* ****** TO-DO: RANDOMIZE whether to create stones, items, special power ups, w/e */
 			eachItem = Create_Stone__Random (itemParent);
 
@@ -52,11 +59,12 @@ public class Board : MonoBehaviour {
 			eachItem.Object.transform.Translate (obj.position);
 			eachItem.Row = int.Parse (obj.name.Split (new char[] {';'}) [0]);
 			eachItem.Column = int.Parse (obj.name.Split (new char[] {';'}) [1]);
+            eachItem.State = Board_Item.Items.States.Resting;
 			eachItem.Object.SetActive (true);	
 
 			// Link the child script back to this handler for easy back-and-forth
 			Board_Item eachBoardItem = ((Board_Item)eachItem.Object.GetComponent<Board_Item> ());
-			eachBoardItem.This = eachItem;
+            eachBoardItem.Item = eachItem;
 			eachBoardItem.Board = this;
 
 			listItems.Add (eachItem);
@@ -67,8 +75,8 @@ public class Board : MonoBehaviour {
 		// Fill any empty spaces by dropping gems down in their _Columns
 		for (int i = 0; i <= amountColumns; i++) {
 			// Grab a list of all _Items in each column, parsing column by column in a buffer
-			List<Board_Item.Item> bufColumns = listItems.FindAll (x => x.Column == i);
-			bufColumns.Sort(delegate(Board_Item.Item x, Board_Item.Item y) { return x.Row.CompareTo(y.Row); });
+			List<Board_Item.Items> bufColumns = listItems.FindAll (x => x.Column == i);
+			bufColumns.Sort(delegate(Board_Item.Items x, Board_Item.Items y) { return x.Row.CompareTo(y.Row); });
 			// Now parse row by row ascending from the *second from* bottom row to check for holes in that column
 			for (int j = 0; j < bufColumns.Count; j++) {
 				// If there is space between this item and the one two items down...
@@ -88,13 +96,8 @@ public class Board : MonoBehaviour {
         }
 	}
 
-	public void Destroy_Item(Board_Item.Item incItem) {
+	public void Destroy_Item(Board_Item.Items incItem) {
         Game_Handler.Player.Add_Mana(incItem.Color, 1);
-
-        if (incItem.Color == Definitions.Mana_Colors.Black)
-            Game_Handler.Player.Character.Add_Level(1);
-        else if (incItem.Color == Definitions.Mana_Colors.White)
-            Game_Handler.Player.Character.Add_Level(10);
 
         Debug.Log(String.Format(
             "L{0}: {1} / {2} HP;  Bk {3} / Bl {4} / G {5} / P {6} / R {7} / W {8} / Y {9}",
@@ -115,41 +118,33 @@ public class Board : MonoBehaviour {
 
         listItems.Remove(incItem);
         GameObject.Destroy (incItem.Object);
-
-		Update_Board ();
-		Count_Rows_and_Columns ();
 	}
 
 
 
 	/* Definitions and functions for individual stones, creation, etc */
 
-	// Prototypes for 9-sided stones
-	public GameObject 
-		proto_Stone_9_Black, 
-		proto_Stone_9_Blue, 
-		proto_Stone_9_Green,
-		proto_Stone_9_Purple,
-		proto_Stone_9_Red, 
-		proto_Stone_9_White,
-		proto_Stone_9_Yellow;
+    public GameObject proto_Stone_9;
 
 
 	// Create and return a random stone
-	public Board_Item.Item Create_Stone__Random(Transform incParent) {
-		Board_Item.Item thisStone = new Board_Item.Item ();
-		thisStone.Type = Board_Item.Item.Types.Stone;
-		thisStone.Color = (Definitions.Mana_Colors)UnityEngine.Random.Range (0, Enum.GetNames (typeof(Definitions.Mana_Colors)).Length);
+	public Board_Item.Items Create_Stone__Random(Transform incParent) {
+		Board_Item.Items thisStone = new Board_Item.Items ();
+		thisStone.Type = Board_Item.Items.Types.Stone;
+        thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9);
 		
-		switch (thisStone.Color) {
-		default:
-		case Definitions.Mana_Colors.Black: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Black); break;
-        case Definitions.Mana_Colors.Blue: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Blue); break;
-        case Definitions.Mana_Colors.Green: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Green); break;
-        case Definitions.Mana_Colors.Purple: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Purple); break;
-        case Definitions.Mana_Colors.Red: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Red); break;
-		case Definitions.Mana_Colors.White: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_White); break;
-        case Definitions.Mana_Colors.Yellow: thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9_Yellow); break;
+        thisStone.Color = (Definitions.Mana_Colors)UnityEngine.Random.Range (0, Enum.GetNames (typeof(Definitions.Mana_Colors)).Length);
+
+        if(thisStone.Object.renderer.material != null)
+            switch (thisStone.Color) {
+		        default:
+                case Definitions.Mana_Colors.Black: thisStone.Object.renderer.material.color = Color.black; break;
+                case Definitions.Mana_Colors.Blue: thisStone.Object.renderer.material.color = Color.blue; break;
+                case Definitions.Mana_Colors.Green: thisStone.Object.renderer.material.color = Color.green; break;
+                case Definitions.Mana_Colors.Purple: thisStone.Object.renderer.material.color = Color.magenta; break;
+                case Definitions.Mana_Colors.Red: thisStone.Object.renderer.material.color = Color.red; break;
+                case Definitions.Mana_Colors.White: thisStone.Object.renderer.material.color = Color.white; break;
+                case Definitions.Mana_Colors.Yellow: thisStone.Object.renderer.material.color = Color.yellow; break;
 		}
 		
 		thisStone.Object.transform.parent = incParent;

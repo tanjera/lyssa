@@ -6,25 +6,33 @@ public class Board_Item : MonoBehaviour {
 
 	[HideInInspector]
 	public Board Board;
-	public Item This;
+	public Items Item;
 
-	public class Item {
+	public class Items {
 		public enum Types {
 			Stone,
 			Consumable,
 			Equipment
 		}
-		
+
+        public enum States {
+            Resting,
+            Dragging
+        }
+
 		public Types Type;
-		public Definitions.Mana_Colors Color;
+        public States State;
+        public Definitions.Mana_Colors Color;
 		public GameObject Object;
 		
 		public int Column;
 		public int Row;
 	}
 
-
-	void OnMouseDown() {
-		Board.Destroy_Item (This);
-	}
+    public void OnCollisionEnter(Collision infoCollision) {
+        if (infoCollision.gameObject.GetComponent<Board_Item>() != null)
+            if (infoCollision.gameObject.GetComponent<Drag_Item>() != null)
+                if (infoCollision.gameObject.GetComponent<Drag_Item>().Is_Dragging == false)
+                    Board.Destroy_Item(infoCollision.gameObject.GetComponent<Board_Item>().Item);
+    }
 }
