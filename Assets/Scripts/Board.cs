@@ -6,95 +6,101 @@ using System.Collections.Generic;
 public class Board : MonoBehaviour {
 
 	Game_Handler Game_Handler;
+    Transform itemParent;
 
 	/* Definitions and functions for the array of items */
 
-	int amountColumns = 0;
-	List<int> amountRows = new List<int> (); // index = column #; some columns may have different amount of rows than others
-	List<Transform> itemPositions = new List<Transform> ();
+    public class Cell {
+        public int X, Y;
+        public Transform Location;
+        public Board_Item Item;
 
-	List<Board_Item.Items> listItems = new List<Board_Item.Items>();
+        public bool isEmpty {
+            get { return Item == null; }
+        }
 
-	void Start() {
-		Game_Handler = (Game_Handler)GameObject.FindObjectOfType (typeof(Game_Handler));
-
-		Count_Rows_and_Columns ();
-		Populate_Board ();
-	}
-
-    void FixedUpdate() {
-        if (Input.GetMouseButtonUp(0)) {
-            Update_Board();
-            Count_Rows_and_Columns();
+        public Vector2 Coords {
+            get { return new Vector2(X, Y); }
         }
     }
 
-	void Count_Rows_and_Columns() {
-		// Run through all __Item_Positions and determine the total number of rows and columns to minimize future recursing
-		itemPositions.AddRange(transform.FindChild ("__Item_Positions").GetComponentsInChildren<Transform> ());
+    List<Cell> Matrix = new List<Cell>();
+
+    public Cell Cell_Above (Vector2 Coords) 
+        { return Matrix.Find(obj => obj.X == Coords.x && obj.Y == Coords.y + 1); }
+    public Cell Cell_Below(Vector2 Coords) 
+        { return Matrix.Find(obj => obj.X == Coords.x && obj.Y == Coords.y - 1); }
+
+	void Start() {
+        itemParent = transform.FindChild("__Items");
+		Game_Handler = (Game_Handler)GameObject.FindObjectOfType (typeof(Game_Handler));
+
+		Build_Matrix ();
+		Populate_Matrix();
+	}
+
+    void FixedUpdate() {
+        if (Input.GetMouseButtonUp(0))
+            Iterate_Matrix();
+    }
+
+	void Build_Matrix() {
+		// Run through all __Item_Positions...
+        List<Transform> itemPositions = new List<Transform>(transform.FindChild("__Item_Positions").GetComponentsInChildren<Transform>());
 		itemPositions = itemPositions.FindAll(obj => obj.name.Contains(";"));
 
-		itemPositions.ForEach(delegate(Transform obj) {
-			// Make sure we're dealing with an actual item position: gameobject naming convention "[row];[col]"
-			int row, col;
-			if ((col = int.Parse(obj.name.Split(new char[] {';'})[1])) > amountColumns)
-				amountColumns = col; 
-			row = int.Parse(obj.name.Split(new char[] {';'})[0]);
-			if (amountRows.Count <= col && col > 0)
-				amountRows.AddRange(new int[(col - amountRows.Count) + 1] );
-			if (amountRows.Count > 0 && amountRows[col] < row )
-			    amountRows[col] = row;
+		itemPositions.ForEach(obj => {
+			// Make sure we're dealing with an actual item position: gameobject naming convention "[X];[Y]"
+            Cell newCell = new Cell();
+            newCell.Location = obj;
+            newCell.X = int.Parse(obj.name.Split(new char[] {';'})[0]);
+            newCell.Y = int.Parse(obj.name.Split(new char[] { ';' })[1]);
+            Matrix.Add(newCell);
 		});
+
 	}
 
+    void Populate_Matrix() {
+        Matrix.ForEach(obj => {
+            obj.Item = Create_Stone(obj);
+        });
+    }
 
-	void Populate_Board() {
-		Transform itemParent = transform.FindChild ("__Items");
-		itemPositions.ForEach (delegate(Transform obj) {
-			Board_Item.Items eachItem;
-			/* ****** TO-DO: RANDOMIZE whether to create stones, items, special power ups, w/e */
-			eachItem = Create_Stone__Random (itemParent);
-
-			// Place the item on the board, locate it on a row & column, and activate
-			eachItem.Object.transform.Translate (obj.position);
-			eachItem.Row = int.Parse (obj.name.Split (new char[] {';'}) [0]);
-			eachItem.Column = int.Parse (obj.name.Split (new char[] {';'}) [1]);
-            eachItem.State = Board_Item.Items.States.Resting;
-			eachItem.Object.SetActive (true);	
-
-			// Link the child script back to this handler for easy back-and-forth
-			Board_Item eachBoardItem = ((Board_Item)eachItem.Object.GetComponent<Board_Item> ());
-            eachBoardItem.Item = eachItem;
-			eachBoardItem.Board = this;
-
-			listItems.Add (eachItem);
-		});
-	}
-
-	void Update_Board() {
-		// Fill any empty spaces by dropping gems down in their _Columns
-		for (int i = 0; i <= amountColumns; i++) {
-			// Grab a list of all _Items in each column, parsing column by column in a buffer
-			List<Board_Item.Items> bufColumns = listItems.FindAll (x => x.Column == i);
-			bufColumns.Sort(delegate(Board_Item.Items x, Board_Item.Items y) { return x.Row.CompareTo(y.Row); });
-			// Now parse row by row ascending from the *second from* bottom row to check for holes in that column
-			for (int j = 0; j < bufColumns.Count; j++) {
-				// If there is space between this item and the one two items down...
-				// Or if this is the first item but is not in the bottom row...
-                if ((j > 0 && bufColumns[j].Row - 1 >= 0 && bufColumns[j-1].Row < bufColumns[j].Row - 1) 
-				    || (j == 0 && bufColumns[j].Row > 0)) {
-                    Vector3 target = itemPositions.Find (obj 
-	                       => bufColumns[j].Row - 1 == int.Parse (obj.name.Split (new char[] {';'}) [0]) 
-	                       && bufColumns[j].Column == int.Parse (obj.name.Split (new char[] {';'}) [1]))
-						.position;
-                    // And move the actual _Item
-                    Game_Handler.Move_Smooth(bufColumns[j].Object.transform, target, 0.1f);
-                    bufColumns[j].Row--; // And set the _Item to be one row down
-                    j--; // And recurse the same _Item again
-				}
-            }
+    public void Iterate_Matrix(bool fillEmpty = false) {
+        bool isComplete = false;
+        while (!isComplete) {
+            isComplete = true;
+            Matrix.ForEach(obj => {
+                if (obj.isEmpty) {
+                    Cell cellAbove = Cell_Above(obj.Coords);
+                    if (cellAbove != null && !cellAbove.isEmpty) {
+                        obj.Item = cellAbove.Item;                                                  // Swap the Item among cells
+                        cellAbove.Item = null;
+                        Game_Handler.Move_Smooth(obj.Item.transform, obj.Location.position, 0.1f);  // Move the actual gameObject
+                        isComplete = false;                                                         // Set to reiterate loop
+                    }
+                }
+            });
         }
-	}
+    }
+
+    Board_Item Create_Stone(Cell incCell) {
+        Board_Item.Items eachItem;
+        eachItem = Randomize__Stone(itemParent);
+
+        // Place the item on the board, locate it on a row & column, and activate
+        eachItem.Object.transform.Translate(incCell.Location.position);
+        
+        eachItem.State = Board_Item.Items.States.Resting;
+        eachItem.Object.SetActive(true);
+
+        // Link the child script back to this handler for easy back-and-forth
+        Board_Item eachBoardItem = ((Board_Item)eachItem.Object.GetComponent<Board_Item>());
+        eachBoardItem.Item = eachItem;
+        eachBoardItem.Board = this;
+
+        return eachBoardItem;
+    }
 
 	public void Destroy_Item(Board_Item.Items incItem) {
         Game_Handler.Player.Add_Mana(incItem.Color, 1);
@@ -115,9 +121,11 @@ public class Board : MonoBehaviour {
             Game_Handler.Player.Mana(Definitions.Mana_Colors.White),
             Game_Handler.Player.Mana(Definitions.Mana_Colors.Yellow)
             ));
-
-        listItems.Remove(incItem);
+        
         GameObject.Destroy (incItem.Object);
+        Cell incCell = Matrix.Find(cell => cell.Item != null && cell.Item.Item == incItem);
+        if (incCell != null)
+            incCell.Item = null;
 	}
 
 
@@ -128,7 +136,7 @@ public class Board : MonoBehaviour {
 
 
 	// Create and return a random stone
-	public Board_Item.Items Create_Stone__Random(Transform incParent) {
+	public Board_Item.Items Randomize__Stone(Transform incParent) {
 		Board_Item.Items thisStone = new Board_Item.Items ();
 		thisStone.Type = Board_Item.Items.Types.Stone;
         thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9);
