@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class Board : MonoBehaviour {
 
@@ -30,6 +31,22 @@ public class Board : MonoBehaviour {
         { return Matrix.Find(obj => obj.X == Coords.x && obj.Y == Coords.y + 1); }
     public Cell Cell_Below(Vector2 Coords) 
         { return Matrix.Find(obj => obj.X == Coords.x && obj.Y == Coords.y - 1); }
+    public Cell Cell_Top(Vector2 Coords) {
+        List<Cell> listCol = Matrix.FindAll(obj => obj.X == Coords.x);
+        return Matrix.Find(obj => obj.X == Coords.x && obj.Y == listCol.Max(o => o.Y));
+    }
+    public List<Cell> Cell_Tops() {
+        List<Cell> listBuffer = new List<Cell>();
+        Matrix.ForEach(obj => {
+            if (listBuffer.FindAll(pred => pred.X == obj.X).Count == 0)
+                listBuffer.Add(obj);
+            else 
+                for (int i = 0; i < listBuffer.Count; i++)
+                    if (listBuffer[i].X == obj.X && listBuffer[i].Y < obj.Y)
+                        listBuffer[i] = obj;
+        });
+        return listBuffer;
+    }
 
 	void Start() {
         itemParent = transform.FindChild("__Items");
@@ -39,9 +56,10 @@ public class Board : MonoBehaviour {
 		Populate_Matrix();
 	}
 
-    void FixedUpdate() {
-        if (Input.GetMouseButtonUp(0))
-            Iterate_Matrix();
+    void Update() {
+        if (Input.GetMouseButtonUp(0)) {
+            Refresh_Matrix();
+        }
     }
 
 	void Build_Matrix() {
@@ -66,7 +84,14 @@ public class Board : MonoBehaviour {
         });
     }
 
-    public void Iterate_Matrix(bool fillEmpty = false) {
+    public void Refresh_Matrix() {
+        Matrix.ForEach(obj => {
+            if (obj.isEmpty)
+                obj.Item = Create_Stone(obj);
+        });
+    }
+
+    public void Iterate_Matrix__Down() {
         bool isComplete = false;
         while (!isComplete) {
             isComplete = true;
@@ -76,7 +101,7 @@ public class Board : MonoBehaviour {
                     if (cellAbove != null && !cellAbove.isEmpty) {
                         obj.Item = cellAbove.Item;                                                  // Swap the Item among cells
                         cellAbove.Item = null;
-                        Game_Handler.Move_Smooth(obj.Item.transform, obj.Location.position, 0.1f);  // Move the actual gameObject
+                        Game_Handler.Move(obj.Item.transform, obj.Location.position, 0.1f);         // Move the actual gameObject
                         isComplete = false;                                                         // Set to reiterate loop
                     }
                 }
@@ -102,26 +127,13 @@ public class Board : MonoBehaviour {
         return eachBoardItem;
     }
 
+    public void Release_Item(Board_Item incItem) {
+        Matrix.Find(obj => obj.Item == incItem).Item = null;
+    }
+
 	public void Destroy_Item(Board_Item.Items incItem) {
         Game_Handler.Player.Add_Mana(incItem.Color, 1);
 
-        Debug.Log(String.Format(
-            "L{0}: {1} / {2} HP;  Bk {3} / Bl {4} / G {5} / P {6} / R {7} / W {8} / Y {9}",
-
-            Game_Handler.Player.Character.Level,
-
-            Game_Handler.Player.Character.Health_Current,
-            Game_Handler.Player.Character.Health_Max,
-
-            Game_Handler.Player.Mana(Definitions.Mana_Colors.Black),
-            Game_Handler.Player.Mana(Definitions.Mana_Colors.Blue),
-            Game_Handler.Player.Mana(Definitions.Mana_Colors.Green),
-            Game_Handler.Player.Mana(Definitions.Mana_Colors.Purple),
-            Game_Handler.Player.Mana(Definitions.Mana_Colors.Red),
-            Game_Handler.Player.Mana(Definitions.Mana_Colors.White),
-            Game_Handler.Player.Mana(Definitions.Mana_Colors.Yellow)
-            ));
-        
         GameObject.Destroy (incItem.Object);
         Cell incCell = Matrix.Find(cell => cell.Item != null && cell.Item.Item == incItem);
         if (incCell != null)

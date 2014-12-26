@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,13 +9,23 @@ public class Game_Handler : MonoBehaviour {
     public Board Board;
     public Player Player;
 
-    class Movement {
+    public Text Text_Level, Text_HP, Text_Mana;
+
+
+    class Transformation {
+        public enum Operations {
+            Move,
+            Scale
+        }
+
+        Operations Operation;
         float Time;
         Transform Transform;
         Vector3 Target,
             Velocity = Vector3.zero;
 
-        public Movement(Transform incTransform, Vector3 incTarget, float incTime) {
+        public Transformation(Operations incOperation, Transform incTransform, Vector3 incTarget, float incTime) {
+            Operation = incOperation;
             Transform = incTransform;
             Target = incTarget;
             Time = incTime;
@@ -28,46 +39,64 @@ public class Game_Handler : MonoBehaviour {
             Time = incTime;
         }
 
-        public bool Move_Smooth() {
-            if (Transform == null) 
+        public bool Process() {
+            if (Transform == null)
                 return true; // If the Transform has been destroyed, remove it from the stack...
-            
+
+            switch (Operation) {
+                default:
+                case Operations.Move: return Move();
+                case Operations.Scale: return Scale();
+            }
+        }
+
+        bool Move() {
             Transform.position = Vector3.SmoothDamp(Transform.position, Target, ref Velocity, Time);
             return Transform.position == Target;
         }
 
-        public Transform _Transform 
-        { get { return Transform; } }
+        bool Scale() {
+            Transform.localScale = Vector3.SmoothDamp(Transform.localScale, Target, ref Velocity, Time);
+            return Transform.localScale == Target;
+        }
+
+        public Transform _Transform { get { return Transform; } }
+        public Operations _Operation { get { return Operation; } }
     }
 
-    Board_Item.Items Item_Drag_Buffer;
-    List<Movement> Movement_Buffer = new List<Movement>();
+    List<Transformation> Transformation_Buffer = new List<Transformation>();
 
     void Start() {
         Player = new Player();
     }
-    void Update() {
-    }
 
     void FixedUpdate() {
-        /* Motion buffer stacks */
+        Text_Level.text = String.Format("Lvl {0}", Player.Character.Level);
+        Text_HP.text = String.Format("HP {0} / {1}",
+            Player.Character.Health_Current,
+            Player.Character.Health_Max);
+        Text_Mana.text = String.Format("Bk {0} \nBl {1} \nGr {2} \nPu {3} \nRe {4} \nWh {5} \nYe {6}",
+            Player.Mana(Definitions.Mana_Colors.Black),
+            Player.Mana(Definitions.Mana_Colors.Blue),
+            Player.Mana(Definitions.Mana_Colors.Green),
+            Player.Mana(Definitions.Mana_Colors.Purple),
+            Player.Mana(Definitions.Mana_Colors.Red),
+            Player.Mana(Definitions.Mana_Colors.White),
+            Player.Mana(Definitions.Mana_Colors.Yellow));
 
-        if (Item_Drag_Buffer != null) {
-            Vector3 vectorTranslate = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            vectorTranslate -= Item_Drag_Buffer.Object.transform.position;
-            vectorTranslate.z = 0; // Lock in Z axis...
-            Item_Drag_Buffer.Object.transform.Translate(vectorTranslate); 
-        }
-        
-        Movement_Buffer.ForEach(obj => { if (obj.Move_Smooth()) Movement_Buffer.Remove(obj); });
+        Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
     }
 
-    public void Move_Smooth(Transform incTransform, Vector3 incTarget, float incTime) {
-        // If this object is *not* already being moved...
-        if (Movement_Buffer.Find(obj => obj._Transform == incTransform) == null)
-            Movement_Buffer.Add(new Movement(incTransform, incTarget, incTime)); // Then move it!
-        else
-            Movement_Buffer.Find(obj => obj._Transform == incTransform).Modify(incTarget, incTime);
+    public void Move(Transform incTransform, Vector3 incTarget, float incTime) 
+        { Operate(Transformation.Operations.Move, incTransform, incTarget, incTime); }
 
+    public void Scale (Transform incTransform, Vector3 incTarget, float incTime) 
+        { Operate(Transformation.Operations.Scale, incTransform, incTarget, incTime); }
+
+    void Operate(Transformation.Operations incOperation, Transform incTransform, Vector3 incTarget, float incTime) {
+        if (Transformation_Buffer.Find(obj => obj._Operation == incOperation && obj._Transform == incTransform) == null)
+            Transformation_Buffer.Add(new Transformation(incOperation, incTransform, incTarget, incTime));
+        else
+            Transformation_Buffer.Find(obj => obj._Operation == incOperation && obj._Transform == incTransform).Modify(incTarget, incTime);
     }
 }

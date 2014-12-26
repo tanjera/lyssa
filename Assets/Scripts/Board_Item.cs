@@ -6,6 +6,8 @@ using System.Collections;
 public class Board_Item : MonoBehaviour {
 
 	[HideInInspector]
+    Game_Handler Game_Handler;
+
 	public Board Board;
 	public Items Item;
 
@@ -30,18 +32,21 @@ public class Board_Item : MonoBehaviour {
 		public int Row;
 	}
 
+    public void Start() {
+        Game_Handler = (Game_Handler)GameObject.FindObjectOfType(typeof(Game_Handler));
+    }
     public void OnCollisionEnter(Collision infoCollision) {
-        if (infoCollision.gameObject.GetComponent<Board_Item>() != null)
-                if (infoCollision.gameObject.GetComponent<Board_Item>().Is_Dragging == false)
-                    Board.Destroy_Item(infoCollision.gameObject.GetComponent<Board_Item>().Item);
+        if (infoCollision.gameObject.GetComponent<Board_Item>() != null
+                && infoCollision.gameObject.GetComponent<Board_Item>().isDragging == false)
+            Board.Destroy_Item(infoCollision.gameObject.GetComponent<Board_Item>().Item);
     }
 
 
     /* Board_Item rigidbody dragging */
 
-    public bool Is_Dragging = false;
-    public float force = 600;
-	public float damping = 6;
+    public bool isDragging = false;
+    public float Force = 1000;
+	public float Damping = 0;
 	
 	Transform jointTrans;
 	float dragDepth;
@@ -49,71 +54,59 @@ public class Board_Item : MonoBehaviour {
 	void OnMouseDown ()
 	{
 		HandleInputBegin (Input.mousePosition);
-        Is_Dragging = true;
+        Board.Release_Item(this);
+        isDragging = true;
 	}
-	
-	void OnMouseUp ()
-	{
+	void OnMouseUp () {
 		HandleInputEnd (Input.mousePosition);
         if (gameObject.GetComponent<Board_Item>() != null)
             gameObject.GetComponent<Board_Item>().Board.Destroy_Item(gameObject.GetComponent<Board_Item>().Item);
-        Board.Iterate_Matrix();
-        Is_Dragging = false;
+        isDragging = false;
 	}
-	
-	void OnMouseDrag ()
-	{
+	void OnMouseDrag () {
 		HandleInput (Input.mousePosition);
 	}
 	
-	public void HandleInputBegin (Vector3 screenPosition)
-	{
-		var ray = Camera.main.ScreenPointToRay (screenPosition);
+	public void HandleInputBegin (Vector3 screenPosition) {
+		Ray ray = Camera.main.ScreenPointToRay (screenPosition);
 		RaycastHit hit;
 		if (Physics.Raycast (ray, out hit)) {
 			if (hit.transform.gameObject.layer == LayerMask.NameToLayer ("Interactive")) {
 				dragDepth = CameraPlane.CameraToPointDepth (Camera.main, hit.point);
 				jointTrans = AttachJoint (hit.rigidbody, hit.point);
+                Game_Handler.Scale(hit.transform, hit.transform.localScale * 0.8f, 0.1f);
 			}
 		}
 	}
-	
-	public void HandleInput (Vector3 screenPosition)
-	{
+	public void HandleInput (Vector3 screenPosition) {
 		if (jointTrans == null)
 			return;
-		var worldPos = Camera.main.ScreenToWorldPoint (screenPosition);
-		jointTrans.position = CameraPlane.ScreenToWorldPlanePoint (Camera.main, dragDepth, screenPosition);
+		jointTrans.position = Camera.main.ScreenToWorldPoint (screenPosition);
 	}
-	
-	public void HandleInputEnd (Vector3 screenPosition)
-	{
+	public void HandleInputEnd (Vector3 screenPosition) {
 		Destroy (jointTrans.gameObject);
 	}
 	
-	Transform AttachJoint (Rigidbody rb, Vector3 attachmentPosition)
-	{
-		GameObject go = new GameObject ("Attachment Point");
-		go.hideFlags = HideFlags.HideInHierarchy; 
-		go.transform.position = attachmentPosition;
+	Transform AttachJoint (Rigidbody body, Vector3 attachPoint) {
+		GameObject obj = new GameObject ("Attachment Point");
+		obj.hideFlags = HideFlags.HideInHierarchy; 
+		obj.transform.position = attachPoint;
 		
-		var newRb = go.AddComponent<Rigidbody> ();
-		newRb.isKinematic = true;
+		Rigidbody rigid = obj.AddComponent<Rigidbody> ();
+		rigid.isKinematic = true;
 		
-		var joint = go.AddComponent<ConfigurableJoint> ();
-		joint.connectedBody = rb;
+		ConfigurableJoint joint = obj.AddComponent<ConfigurableJoint> ();
+		joint.connectedBody = body;
 		joint.configuredInWorldSpace = true;
-		joint.xDrive = NewJointDrive (force, damping);
-		joint.yDrive = NewJointDrive (force, damping);
-		joint.zDrive = NewJointDrive (force, damping);
-		joint.slerpDrive = NewJointDrive (force, damping);
+		joint.xDrive = NewJointDrive (Force, Damping);
+		joint.yDrive = NewJointDrive (Force, Damping);
+		joint.zDrive = NewJointDrive (Force, Damping);
+		joint.slerpDrive = NewJointDrive (Force, Damping);
 		joint.rotationDriveMode = RotationDriveMode.Slerp;
 		
-		return go.transform;
+		return obj.transform;
 	}
-	
-	private JointDrive NewJointDrive (float force, float damping)
-	{
+	private JointDrive NewJointDrive (float force, float damping) {
 		JointDrive drive = new JointDrive ();
 		drive.mode = JointDriveMode.Position;
 		drive.positionSpring = force;
