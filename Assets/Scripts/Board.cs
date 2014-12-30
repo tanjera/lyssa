@@ -134,6 +134,11 @@ public class Board : MonoBehaviour {
 	public void Destroy_Item(Board_Item.Items incItem) {
         Game_Handler.Player.Add_Mana(incItem.Color, 1);
 
+        GameObject instParticles = (GameObject)GameObject.Instantiate(proto_Particles);
+        instParticles.transform.Translate(new Vector3(incItem.Object.transform.position.x, 0, incItem.Object.transform.position.y));
+        instParticles.renderer.particleSystem.startColor = Definitions.Lookup_Colors[incItem.Color.GetHashCode()];
+        instParticles.SetActive(true);
+
         GameObject.Destroy (incItem.Object);
         Cell incCell = Matrix.Find(cell => cell.Item != null && cell.Item.Item == incItem);
         if (incCell != null)
@@ -145,6 +150,7 @@ public class Board : MonoBehaviour {
 	/* Definitions and functions for individual stones, creation, etc */
 
     public GameObject proto_Stone_9;
+    public GameObject proto_Particles;
 
 
 	// Create and return a random stone
@@ -156,16 +162,7 @@ public class Board : MonoBehaviour {
         thisStone.Color = (Definitions.Mana_Colors)UnityEngine.Random.Range (0, Enum.GetNames (typeof(Definitions.Mana_Colors)).Length);
 
         if(thisStone.Object.renderer.material != null)
-            switch (thisStone.Color) {
-		        default:
-                case Definitions.Mana_Colors.Black: thisStone.Object.renderer.material.color = Color.black; break;
-                case Definitions.Mana_Colors.Blue: thisStone.Object.renderer.material.color = Color.blue; break;
-                case Definitions.Mana_Colors.Green: thisStone.Object.renderer.material.color = Color.green; break;
-                case Definitions.Mana_Colors.Purple: thisStone.Object.renderer.material.color = Color.magenta; break;
-                case Definitions.Mana_Colors.Red: thisStone.Object.renderer.material.color = Color.red; break;
-                case Definitions.Mana_Colors.White: thisStone.Object.renderer.material.color = Color.white; break;
-                case Definitions.Mana_Colors.Yellow: thisStone.Object.renderer.material.color = Color.yellow; break;
-		}
+            thisStone.Object.renderer.material.color = Definitions.Lookup_Colors[thisStone.Color.GetHashCode()];
 		
 		thisStone.Object.transform.parent = incParent;
 		return thisStone;

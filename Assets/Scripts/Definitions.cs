@@ -11,4 +11,14 @@ public static class Definitions {
         White,
         Yellow
     }
+
+    public static Color[] Lookup_Colors = new Color[] {
+        Color.black,
+        Color.blue,
+        Color.green,
+        Color.magenta,
+        Color.red,
+        Color.white,
+        Color.yellow
+    };
 }

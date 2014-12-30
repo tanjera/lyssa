@@ -8,15 +8,30 @@ public class TO_DO : MonoBehaviour {
     /* TO DO
      
       
-     12/21, left over from:
+     - destroy all particle engines on Refresh_Matrix()... (or else there will be a million stale gameObject particle engines)
+     - make particle engine sprites (eg. snowflakes for blue, fire for red, etc)
      
-     integrate the DragRigidbody script into Board_Item.cs better; naming conventions, put the functions in order, etc.
-     *  then move CameraPlane somewhere better integrated...
+     - implement game logic re: dragging stone color accumulates mana of that color but other stone colors cost points to drag stone through & destroy...
      
+     - move CameraPlane somewhere better integrated...
      
-     then it should almost be ready for some game logic (destroying collateral tiles while dragging one stone across the board costs X mana, etc)
-     and/or fancy effects (on stone destroy, make it explode? instead of just disappearing...)
+     - add some 3D models... make it look pretty
+     -- snowflakes, fire, etc
+      
+      
      
+     * 
+     * 
+     
+     color definitions...
+     * 
+        Black- plague
+        Blue- water
+        Green- life/leaves
+        Purple- darkness
+        Red- fire
+        White- snow/ice
+        Yellow- light
      
      */
 

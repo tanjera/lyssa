@@ -10,7 +10,7 @@ public class Board_Item : MonoBehaviour {
 
 	public Board Board;
 	public Items Item;
-
+    
 	public class Items {
 		public enum Types {
 			Stone,
@@ -74,7 +74,7 @@ public class Board_Item : MonoBehaviour {
 			if (hit.transform.gameObject.layer == LayerMask.NameToLayer ("Interactive")) {
 				dragDepth = CameraPlane.CameraToPointDepth (Camera.main, hit.point);
 				jointTrans = AttachJoint (hit.rigidbody, hit.point);
-                Game_Handler.Scale(hit.transform, hit.transform.localScale * 0.8f, 0.1f);
+                Game_Handler.Scale(hit.transform, hit.transform.localScale * 0.7f, 0.1f);
 			}
 		}
 	}
