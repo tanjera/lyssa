@@ -5,32 +5,35 @@ using System.Collections;
 [RequireComponent(typeof(Rigidbody))]
 public class Board_Item : MonoBehaviour {
 
+    public class Items {
+        public enum Types {
+            Stone,
+            Consumable,
+            Equipment
+        }
+
+        public Types Type;
+        public Definitions.Mana_Colors Color;
+        public GameObject Object;
+
+        public int Column;
+        public int Row;
+    }
+
 	[HideInInspector]
     Game_Handler Game_Handler;
 
 	public Board Board;
 	public Items Item;
+
+    // Variables for dragging joint
+    public bool isDragging = false;
+    public float Force = 1000;
+    public float Damping = 0;
     
-	public class Items {
-		public enum Types {
-			Stone,
-			Consumable,
-			Equipment
-		}
+    Transform jointTrans;
+    float dragDepth;
 
-        public enum States {
-            Resting,
-            Dragging
-        }
-
-		public Types Type;
-        public States State;
-        public Definitions.Mana_Colors Color;
-		public GameObject Object;
-		
-		public int Column;
-		public int Row;
-	}
 
     public void Start() {
         Game_Handler = (Game_Handler)GameObject.FindObjectOfType(typeof(Game_Handler));
@@ -40,16 +43,6 @@ public class Board_Item : MonoBehaviour {
                 && infoCollision.gameObject.GetComponent<Board_Item>().isDragging == false)
             Board.Destroy_Item(infoCollision.gameObject.GetComponent<Board_Item>().Item);
     }
-
-
-    /* Board_Item rigidbody dragging */
-
-    public bool isDragging = false;
-    public float Force = 1000;
-	public float Damping = 0;
-	
-	Transform jointTrans;
-	float dragDepth;
 
 	void OnMouseDown ()
 	{

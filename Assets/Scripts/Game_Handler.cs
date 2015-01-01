@@ -11,6 +11,9 @@ public class Game_Handler : MonoBehaviour {
 
     public Text Text_Level, Text_HP, Text_Mana;
 
+    public GameObject proto_Stone_9;
+    public GameObject[] proto_Particles = new GameObject[Definitions.Mana_Amount];
+
 
     class Transformation {
         public enum Operations {

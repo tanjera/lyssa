@@ -9,6 +9,9 @@ public class Board : MonoBehaviour {
 	Game_Handler Game_Handler;
     Transform itemParent;
 
+    Board_Item.Items itemDragging;
+
+
 	/* Definitions and functions for the array of items */
 
     public class Cell {
@@ -115,8 +118,6 @@ public class Board : MonoBehaviour {
 
         // Place the item on the board, locate it on a row & column, and activate
         eachItem.Object.transform.Translate(incCell.Location.position);
-        
-        eachItem.State = Board_Item.Items.States.Resting;
         eachItem.Object.SetActive(true);
 
         // Link the child script back to this handler for easy back-and-forth
@@ -134,9 +135,8 @@ public class Board : MonoBehaviour {
 	public void Destroy_Item(Board_Item.Items incItem) {
         Game_Handler.Player.Add_Mana(incItem.Color, 1);
 
-        GameObject instParticles = (GameObject)GameObject.Instantiate(proto_Particles);
+        GameObject instParticles = (GameObject)GameObject.Instantiate(Game_Handler.proto_Particles[incItem.Color.GetHashCode()]);
         instParticles.transform.Translate(new Vector3(incItem.Object.transform.position.x, 0, incItem.Object.transform.position.y));
-        instParticles.renderer.particleSystem.startColor = Definitions.Lookup_Colors[incItem.Color.GetHashCode()];
         instParticles.SetActive(true);
 
         GameObject.Destroy (incItem.Object);
@@ -145,19 +145,11 @@ public class Board : MonoBehaviour {
             incCell.Item = null;
 	}
 
-
-
-	/* Definitions and functions for individual stones, creation, etc */
-
-    public GameObject proto_Stone_9;
-    public GameObject proto_Particles;
-
-
 	// Create and return a random stone
 	public Board_Item.Items Randomize__Stone(Transform incParent) {
 		Board_Item.Items thisStone = new Board_Item.Items ();
 		thisStone.Type = Board_Item.Items.Types.Stone;
-        thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9);
+        thisStone.Object = (GameObject)GameObject.Instantiate(Game_Handler.proto_Stone_9);
 		
         thisStone.Color = (Definitions.Mana_Colors)UnityEngine.Random.Range (0, Enum.GetNames (typeof(Definitions.Mana_Colors)).Length);
 
