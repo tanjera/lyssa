@@ -47,15 +47,13 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Drag Rigidbody\CameraPlane.cs" />
-     <Compile Include="Assets\Scripts\Board.cs" />
-     <Compile Include="Assets\Scripts\Board_Item.cs" />
      <Compile Include="Assets\Scripts\Characters.cs" />
-     <Compile Include="Assets\Scripts\Definitions.cs" />
-     <Compile Include="Assets\Scripts\Game_Handler.cs" />
-     <Compile Include="Assets\Scripts\Particles.cs" />
+     <Compile Include="Assets\Scripts\Game.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
      <Compile Include="Assets\Scripts\Skills.cs" />
      <Compile Include="Assets\Scripts\TO_DO.cs" />
+     <Compile Include="Assets\Scripts\__Items.cs" />
+     <Compile Include="Assets\Scripts\__Particles.cs" />
      <None Include="Assets\Hierarchy Organizer\Hierarchy Organizer 3.txt" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files (x86)/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/4.6.1/UnityEngine.UI.dll</HintPath>

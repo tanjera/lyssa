@@ -12,11 +12,7 @@ public class Character {
     int HP_Current, HP_Max;
     List<Skill> Skills = new List<Skill>();
 
-    /* TO ADD:
-        * - picture
-        * - a bunch of other stuff
-        */
-
+    
     public Character(string incName, int incLevel_Max, int incHP_Base, int incHP_Increments, List<Skill> incSkills) {
         Name = incName;
         Level_Current = 1;

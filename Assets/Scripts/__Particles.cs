@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Particles : MonoBehaviour {
+public class __Particles : MonoBehaviour {
 
     ParticleSystem thisParticle;
 
