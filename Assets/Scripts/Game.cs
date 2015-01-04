@@ -7,17 +7,17 @@ using System.Collections.Generic;
 
 public class Game : MonoBehaviour {
 
-    public Player Player;
+    public Player Player_1;
     public Text Text_Level, Text_HP, Text_Mana;
 
 
     void Start() {
-        Player = new Player();
+        Player_1 = new Player();
 
         // Construct the playing board
-        Item_Container = GameObject.Find("__Item_Container").transform;
-        Build_Matrix();
-        Populate_Matrix();
+        Playing_Board__Container = GameObject.Find("Playing_Board__Item_Container").transform;
+        Build__Playing_Board();
+        Populate__Playing_Board();
 
     }
 
@@ -29,16 +29,16 @@ public class Game : MonoBehaviour {
     Transform Drag_Joint;
     float Drag_Depth,
         Drag_Force = 1000,
-        Drag_Damping = 0;
+        Drag_Damping = 1;
 
 
     void FixedUpdate() {
         Text_Mana.text = String.Format("Bl {0} \nGr {1} \nRe {2} \nWh {3} \nYe {4}",
-            Player.Mana(Mana_Colors.Blue),
-            Player.Mana(Mana_Colors.Green),
-            Player.Mana(Mana_Colors.Red),
-            Player.Mana(Mana_Colors.White),
-            Player.Mana(Mana_Colors.Yellow));
+            Player_1.Mana(Mana_Colors.Blue),
+            Player_1.Mana(Mana_Colors.Green),
+            Player_1.Mana(Mana_Colors.Red),
+            Player_1.Mana(Mana_Colors.White),
+            Player_1.Mana(Mana_Colors.Yellow));
 
         Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
     }
@@ -48,9 +48,9 @@ public class Game : MonoBehaviour {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit)) {
-                if (hit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Board_Item)) {
+                if (hit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Interactive)) {
 
-                    Drag_Item = Matrix.Find(obj => obj.Item.Transform == hit.transform).Item;
+                    Drag_Item = Playing_Board.Cells.Find(obj => obj.Item.Transform == hit.transform).Item;
                     Release_Item(Drag_Item);
 
                     Drag_Depth = CameraPlane.CameraToPointDepth(Camera.main, hit.point);
@@ -69,7 +69,7 @@ public class Game : MonoBehaviour {
             Dragging = false;
             Drag_Item = null;
 
-            Refresh_Matrix();
+            Refresh__Playing_Board();
         }
 
         if (Input.GetMouseButton(0)) {
@@ -115,14 +115,15 @@ public class Game : MonoBehaviour {
     class Transformation {
         public enum Operations {
             Move,
-            Scale
+            Scale,
+            Clamp_Rotation
         }
 
         Operations Operation;
         float Time;
         Transform Transform;
         Vector3 Target,
-            Velocity = Vector3.zero;
+            Velocity;
 
         public Transformation(Operations incOperation, Transform incTransform, Vector3 incTarget, float incTime) {
             Operation = incOperation;
@@ -147,6 +148,7 @@ public class Game : MonoBehaviour {
                 default:
                 case Operations.Move: return Move();
                 case Operations.Scale: return Scale();
+                case Operations.Clamp_Rotation: return Clamp_Rotation();
             }
         }
         bool Move() {
@@ -156,6 +158,14 @@ public class Game : MonoBehaviour {
         bool Scale() {
             Transform.localScale = Vector3.SmoothDamp(Transform.localScale, Target, ref Velocity, Time);
             return Transform.localScale == Target;
+        }
+        bool Clamp_Rotation() {
+            Vector3 tempAngles = Transform.localEulerAngles;
+            tempAngles.x = tempAngles.x < 180 ? Mathf.Clamp(tempAngles.x, 0, Target.x) : Mathf.Clamp(tempAngles.x, 360 - Target.x, 360);
+            tempAngles.y = tempAngles.y < 180 ? Mathf.Clamp(tempAngles.y, 0, Target.y) : Mathf.Clamp(tempAngles.y, 360 - Target.y, 360);
+            tempAngles.z = tempAngles.z < 180 ? Mathf.Clamp(tempAngles.z, 0, Target.z) : Mathf.Clamp(tempAngles.z, 360 - Target.z, 360);
+            Transform.localEulerAngles = tempAngles;
+            return false;
         }
 
         public Transform _Transform { get { return Transform; } }
@@ -179,7 +189,7 @@ public class Game : MonoBehaviour {
 
 #region DEFINITIONS
 
-    public static string Layer__Board_Item = "Board Item";
+    public static string Layer__Interactive = "Interactive";
 
     public static int Mana_Color = 5;
 
@@ -202,60 +212,203 @@ public class Game : MonoBehaviour {
 #endregion
 
 
+#region PLAYER
+
+    public class Player {
+        Character _Character = new List_Characters().Chirba;
+        int[] _Mana = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
+
+        public Character Character {
+            get { return _Character; }
+        }
+
+        public int Mana(Game.Mana_Colors Color) { return _Mana[(int)Color]; }
+        public int[] Mana() { return _Mana; }
+        public void Add_Mana(Game.Mana_Colors Color, int Amount) { _Mana[(int)Color] += Amount; }
+
+        public bool Use_Mana(Game.Mana_Colors Color, int Amount) {
+            if (_Mana[(int)Color] < Amount)
+                return false;
+
+            _Mana[(int)Color] -= Amount;
+            return true;
+        }
+    }
+
+
+#endregion
+
+
+#region CHARACTER
+
+    public class Character {
+        string Name;
+        int Level_Current, Level_Max;
+        int HP_Base, HP_Increments;
+
+        int HP_Current, HP_Max;
+        List<Skill> Skills = new List<Skill>();
+
+
+        public Character(string incName, int incLevel_Max, int incHP_Base, int incHP_Increments, List<Skill> incSkills) {
+            Name = incName;
+            Level_Current = 1;
+            Level_Max = incLevel_Max;
+
+            HP_Base = incHP_Base;
+            HP_Increments = incHP_Increments;
+
+            HP_Max = Calculate__Health_Max();
+            HP_Current = HP_Max;
+
+            Skills = incSkills;
+        }
+
+        public int Level {
+            get { return Level_Current; }
+        }
+        public void Add_Level(int levelUp) {
+            levelUp = Level_Current + levelUp > Level_Max
+                ? Level_Max - Level_Current : levelUp;
+
+            Level_Current += levelUp;
+            HP_Max += Calculate__Health_Increase(levelUp);
+            HP_Current = HP_Max;
+        }
+
+        public int Health_Max {
+            get { return HP_Max; }
+            set { HP_Max = value; }
+        }
+        public int Health_Current {
+            get { return HP_Current; }
+            set { HP_Current = value; }
+        }
+        public void Adjust__Health_Current(int incValue) { HP_Current += incValue; }
+        public void Adjust__Health_Max(int incValue) { HP_Max += incValue; }
+        public int Calculate__Health_Max() { return HP_Base + (int)((Level_Current - 1) * HP_Increments); }
+        public int Calculate__Health_Increase(int levelAdjust) { return (int)(levelAdjust * HP_Increments); }
+    }
+
+    public class List_Characters {
+        public Character Chirba = new Character("Chirba", 100, 50, 55,
+            new List<Skill>() {
+            List_Skills.Fireball,
+            List_Skills.Ice_Lance,
+            List_Skills.Lightning_Bolt
+        });
+    }
+
+
+#endregion
+
+
+#region SKILLS
+
+    public class Skill {
+        public enum Types {
+            Magic,
+            Physical
+        }
+
+        public class Tier {
+            int Level;
+            int Damage;
+            int[] Mana;     // Amount of mana required in each color (ordered by Definitions.Mana_Colors enum)
+
+            public Tier(int incLevel, int incDamage, int[] incMana) {
+                Level = incLevel;
+                Damage = incDamage;
+                Mana = incMana;
+            }
+        }
+
+        string Name;
+        Types Type;
+        List<Tier> Tiers = new List<Tier>();
+
+
+        public Skill(string incName, Types incType, List<Tier> incTiers) {
+            Name = incName;
+            Type = incType;
+            Tiers = incTiers;
+        }
+    }
+
+    public static class List_Skills {
+        public static Skill Fireball = new Skill("Fireball", Skill.Types.Magic, new List<Skill.Tier>() {
+            new Skill.Tier(1, 5,   new int[] {0, 0, 0, 0, 5, 0, 0}),
+            new Skill.Tier(2, 10,  new int[] {0, 0, 0, 0, 6, 0, 0}),
+            new Skill.Tier(3, 15,  new int[] {2, 0, 0, 0, 6, 0, 0})
+        });
+
+        public static Skill Ice_Lance = new Skill("Ice Lance", Skill.Types.Magic, new List<Skill.Tier>() {
+            new Skill.Tier(1, 8,   new int[] {0, 5, 0, 0, 0, 0, 0}),
+            new Skill.Tier(2, 12,  new int[] {0, 8, 0, 0, 0, 0, 0}),
+            new Skill.Tier(3, 18,  new int[] {0, 8, 0, 0, 0, 2, 0}),
+            new Skill.Tier(4, 24,  new int[] {0, 10, 0, 0, 0, 4, 0})
+        });
+
+        public static Skill Lightning_Bolt = new Skill("Lightning Bolt", Skill.Types.Magic, new List<Skill.Tier>() {
+            new Skill.Tier(1, 10,  new int[] {0, 6, 0, 0, 0, 0, 0}),
+            new Skill.Tier(2, 18,  new int[] {0, 9, 0, 0, 0, 0, 0}),
+            new Skill.Tier(3, 24,  new int[] {2, 10, 0, 0, 0, 0, 0}),
+            new Skill.Tier(4, 32,  new int[] {3, 12, 0, 0, 0, 0, 0})
+        });
+    }
+
+
+#endregion
+
+
 #region PLAYING BOARD
 
-    public GameObject proto_Stone_9;
-    public GameObject[] proto_Particles = new GameObject[Mana_Color];
+    #region MATRICES (PLAYING & MANA BOARDS)
 
-    Transform Item_Container,
-        Item_Dragging;
-
-    #region MATRIX: BOARD ITEMS
-
-        public class Items {
-            public enum Types {
-                Stone,
-                Consumable,
-                Equipment
-            }
-
-            public Types Type;
-            public Game.Mana_Colors Color;
-            public GameObject Object;
-
-            public int Column;
-            public int Row;
-
-            public Transform Transform {
-                get { return Object == null ? null : Object.transform; }
-            }
+    public class Items {
+        public enum Types {
+            Stone,
+            Consumable,
+            Equipment,
+            Badge
         }
 
-        public class Cell {
-            public int X, Y;
-            public Transform Location;
-            public Items Item;
+        public Types Type;
+        public Game.Mana_Colors Color;
+        public GameObject Object;
 
-            public bool isEmpty {
-                get { return Item == null; }
-            }
+        public int Column;
+        public int Row;
 
-            public Vector2 Coords {
-                get { return new Vector2(X, Y); }
-            }
+        public Transform Transform {
+            get { return Object == null ? null : Object.transform; }
+        }
+    }
+    public class Cell {
+        public int X, Y;
+        public Transform Location;
+        public Items Item;
+
+        public bool isEmpty {
+            get { return Item == null; }
         }
 
-        List<Cell> Matrix = new List<Cell>();
+        public Vector2 Coords {
+            get { return new Vector2(X, Y); }
+        }
+    }
+    public class Matrix {
+        public List<Cell> Cells = new List<Cell>();
 
-        public Cell Cell_Above(Vector2 Coords) { return Matrix.Find(obj => obj.X == Coords.x && obj.Y == Coords.y + 1); }
-        public Cell Cell_Below(Vector2 Coords) { return Matrix.Find(obj => obj.X == Coords.x && obj.Y == Coords.y - 1); }
+        public Cell Cell_Above(Vector2 Coords) { return Cells.Find(obj => obj.X == Coords.x && obj.Y == Coords.y + 1); }
+        public Cell Cell_Below(Vector2 Coords) { return Cells.Find(obj => obj.X == Coords.x && obj.Y == Coords.y - 1); }
         public Cell Cell_Top(Vector2 Coords) {
-            List<Cell> listCol = Matrix.FindAll(obj => obj.X == Coords.x);
-            return Matrix.Find(obj => obj.X == Coords.x && obj.Y == listCol.Max(o => o.Y));
+            List<Cell> listCol = Cells.FindAll(obj => obj.X == Coords.x);
+            return Cells.Find(obj => obj.X == Coords.x && obj.Y == listCol.Max(o => o.Y));
         }
         public List<Cell> Cell_Tops() {
             List<Cell> listBuffer = new List<Cell>();
-            Matrix.ForEach(obj => {
+            Cells.ForEach(obj => {
                 if (listBuffer.FindAll(pred => pred.X == obj.X).Count == 0)
                     listBuffer.Add(obj);
                 else
@@ -266,12 +419,27 @@ public class Game : MonoBehaviour {
             return listBuffer;
         }
 
+        
+    }   
+    
     #endregion
 
+    Matrix Playing_Board = new Matrix(),
+        Mana_Board_1 = new Matrix(),
+        Mana_Board_2 = new Matrix();
 
-    void Build_Matrix() {
+    Transform Playing_Board__Container,
+        Mana_Board_1__Container,
+        Mana_Board_2__Container;
+
+    public GameObject Prototype__Stone9_Generic;
+    public GameObject[] Prototype__Particles = new GameObject[Mana_Color];
+
+    Transform Item_Dragging;
+
+    void Build__Playing_Board() {
         // Run through all __Item_Positions...
-        List<Transform> itemPositions = new List<Transform>(GameObject.Find("__Item_Positions").GetComponentsInChildren<Transform>());
+        List<Transform> itemPositions = new List<Transform>(GameObject.Find("Playing_Board__Item_Positions").GetComponentsInChildren<Transform>());
         itemPositions = itemPositions.FindAll(obj => obj.name.Contains(";"));
 
         itemPositions.ForEach(obj => {
@@ -280,32 +448,32 @@ public class Game : MonoBehaviour {
             newCell.Location = obj;
             newCell.X = int.Parse(obj.name.Split(new char[] { ';' })[0]);
             newCell.Y = int.Parse(obj.name.Split(new char[] { ';' })[1]);
-            Matrix.Add(newCell);
+            Playing_Board.Cells.Add(newCell);
         });
 
     }
-    void Populate_Matrix() {
-        Matrix.ForEach(obj => {
+    void Populate__Playing_Board() {
+        Playing_Board.Cells.ForEach(obj => {
             obj.Item = Create_Stone(obj);
         });
     }
-    void Refresh_Matrix() {
-        Matrix.ForEach(obj => {
+    void Refresh__Playing_Board() {
+        Playing_Board.Cells.ForEach(obj => {
             if (obj.isEmpty)
                 obj.Item = Create_Stone(obj);
         });
     }
-    void Iterate_Matrix__Down() {
+    void Iterate_Down__Playing_Board() {
         bool isComplete = false;
         while (!isComplete) {
             isComplete = true;
-            Matrix.ForEach(obj => {
+            Playing_Board.Cells.ForEach(obj => {
                 if (obj.isEmpty) {
-                    Cell cellAbove = Cell_Above(obj.Coords);
+                    Cell cellAbove = Playing_Board.Cell_Above(obj.Coords);
                     if (cellAbove != null && !cellAbove.isEmpty) {
                         obj.Item = cellAbove.Item;                                                  // Swap the Item among cells
                         cellAbove.Item = null;
-                        Move(obj.Item.Object.transform, obj.Location.position, 0.1f);                      // Move the actual gameObject
+                        Move(obj.Item.Object.transform, obj.Location.position, 0.1f);               // Move the actual gameObject
                         isComplete = false;                                                         // Set to reiterate loop
                     }
                 }
@@ -317,34 +485,34 @@ public class Game : MonoBehaviour {
         // 1. check to see if the item collided with is the one being dragged...
         // 2. if not, then destroy the item collided with...
         // 3. and add to mana pool
-        if (incCollided != Drag_Item.Object && incCollided.layer == LayerMask.NameToLayer(Game.Layer__Board_Item))
+        if (incCollided != Drag_Item.Object && incCollided.layer == LayerMask.NameToLayer(Game.Layer__Interactive))
             Destroy_Item(incCollided);
     }
     void Release_Item(Items incItem) {
-        Matrix.Find(obj => obj.Item == incItem).Item = null;
+        Playing_Board.Cells.Find(obj => obj.Item == incItem).Item = null;
     }
     void Destroy_Item(GameObject incObject) {
-        Matrix.ForEach(obj => {
+        Playing_Board.Cells.ForEach(obj => {
             if (obj.Item != null && obj.Item.Object == incObject)
                 Destroy_Item(obj.Item);
         });
     }
     void Destroy_Item(Items incItem) {
-        Player.Add_Mana(incItem.Color, 1);
+        Player_1.Add_Mana(incItem.Color, 1);
 
-        GameObject instParticles = (GameObject)GameObject.Instantiate(proto_Particles[incItem.Color.GetHashCode()]);
+        GameObject instParticles = (GameObject)GameObject.Instantiate(Prototype__Particles[incItem.Color.GetHashCode()]);
         instParticles.transform.Translate(new Vector3(incItem.Object.transform.position.x, 0, incItem.Object.transform.position.y));
         instParticles.SetActive(true);
 
         GameObject.Destroy(incItem.Object);
-        Cell incCell = Matrix.Find(cell => cell.Item != null && cell.Item == incItem);
+        Cell incCell = Playing_Board.Cells.Find(cell => cell.Item != null && cell.Item == incItem);
         if (incCell != null)
             incCell.Item = null;
     }
 
     Items Create_Stone(Cell incCell) {
         Items eachItem;
-        eachItem = Randomize__Stone(Item_Container);
+        eachItem = Randomize__Stone(Playing_Board__Container);
 
         eachItem.Object.GetComponent<__Items>().Item_Collision += new __Items.Item_Collision_Handler(Collide_Items);
         eachItem.Object.transform.Translate(incCell.Location.position);
@@ -355,7 +523,7 @@ public class Game : MonoBehaviour {
     public Items Randomize__Stone(Transform incParent) {
         Items thisStone = new Items();
         thisStone.Type = Items.Types.Stone;
-        thisStone.Object = (GameObject)GameObject.Instantiate(proto_Stone_9);
+        thisStone.Object = (GameObject)GameObject.Instantiate(Prototype__Stone9_Generic);
         thisStone.Color = (Game.Mana_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(Mana_Colors)).Length);
 
         if (thisStone.Object.renderer.material != null)
@@ -367,4 +535,5 @@ public class Game : MonoBehaviour {
 
 
  #endregion
+
 }

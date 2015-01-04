@@ -1,0 +1,32 @@
+﻿
+
+
+MAKE
+badges for each stone element
+add scratches to stones (bump maps)
+
+
+MANA BOARD
+uses pretty badge stones
+large stone is 10 mana
+medium stone is 5 mana
+small stone is 1 mana
+
+
+make prototype easier to play
+
+maybe add some fancy 3d objects?
+
+make icons for current mana amount counters
+add currency...
+add board items (silver coin, magical weapons, etc)
+start making beginning levels (enemies)
+
+MANA LOGIC: EVENTS
+make events trigger mana counting
+
+
+
+implement game logic re: dragging stone color accumulates mana of that color but other stone colors cost points to drag stone through & destroy...
+     
+move CameraPlane somewhere better integrated...

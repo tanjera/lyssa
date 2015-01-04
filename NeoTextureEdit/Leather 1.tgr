@@ -1,0 +1,25 @@
+#NTEVersion 6
+#BeginNodes 5
+281 85 0
+engine.graphics.synthesis.texture.PatternPerlinNoise
+ExportName "" Transformation 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 Color_Mapping 2 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0 1.0 1.0 ScaleX 1.0 ScaleY 1.0 ValueScale 1.0 Persistence 0.5 Spectral_Control 9 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 StartBand 1 EndBand 8 Seed -1 Periodic true endparameters
+510 402 0
+engine.graphics.synthesis.texture.FilterColorize
+ExportName "" Gray_to_Color_Mapping 2 0.40784314 0.21960784 0.03529412 1.0 0.0 0.5921569 0.2901961 0.19215687 1.0 1.0 endparameters
+245 299 0
+engine.graphics.synthesis.texture.FilterNormalMap
+ExportName "" Strength 1.0 endparameters
+505 87 0
+engine.graphics.synthesis.texture.PatternCellular
+ExportName "" Transformation 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 Color_Mapping 2 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0 1.0 1.0 Cell_Type 0 Distance_ 0 PointGen 0 Seed 0 Intensity 1.0 Jitter 0.0 NumPoints 16 RandColor false Periodic true endparameters
+465 250 0
+engine.graphics.synthesis.texture.FilterBlend
+ExportName "" Layer_Func. 0 Opacity 0.125 Inv._Alpha false endparameters
+#EndNodes
+#BeginConnections 4
+0 2 0
+0 4 0
+3 4 1
+4 1 0
+#EndConnections
+glpreview 1 2 -1 -1 Object 0 Spec._Power 20.0 POM_Strength 0.25 Ambient 0.25 TexScale_U 2 TexScale_V 2 CamRotX 74.0 CamRotY 309.0 CamDist 1.3000001 endglpreview

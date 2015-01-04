@@ -1,0 +1,24 @@
+#NTEVersion 6
+#BeginNodes 5
+137 -87 0
+engine.graphics.synthesis.texture.PatternBitmap
+ExportName "" Transformation 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 Image ..\Assets\Objects\Textures\Board,:Checkers.png Resolution Interpolation 1 endparameters
+329 300 0
+engine.graphics.synthesis.texture.FilterNormalMap
+ExportName "" Strength 1.0 endparameters
+298 -81 0
+engine.graphics.synthesis.texture.PatternBrick
+ExportName "" Transformation 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 Color_Mapping 2 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0 1.0 1.0 NumX 2 NumY 2 Shift 0.0 RandShift 0.0 GapX 0.0 GapY 0.0 Smooth 0.025 RandColor false endparameters
+268 172 0
+engine.graphics.synthesis.texture.FilterBlend
+ExportName "" Layer_Func. 0 Opacity 0.75 Inv._Alpha false endparameters
+161 39 0
+engine.graphics.synthesis.texture.PatternPerlinNoise
+ExportName "" Transformation 1.0 0.0 0.0 0.0 1.0 0.0 0.0 0.0 1.0 Color_Mapping 2 0.0 0.0 0.0 1.0 0.0 1.0 1.0 1.0 1.0 1.0 ScaleX 1.0 ScaleY 1.0 ValueScale 1.0 Persistence 0.5 Spectral_Control 9 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 StartBand 1 EndBand 8 Seed -1 Periodic true endparameters
+#EndNodes
+#BeginConnections 3
+2 3 1
+3 1 0
+4 3 0
+#EndConnections
+glpreview 0 1 1 -1 Object 0 Spec._Power 60.0 POM_Strength 0.125 Ambient 0.125 TexScale_U 4 TexScale_V 4 CamRotX 60.0 CamRotY 109.0 CamDist 0.5 endglpreview
