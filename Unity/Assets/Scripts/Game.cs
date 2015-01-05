@@ -53,7 +53,7 @@ public class Game : MonoBehaviour {
                     Drag_Item = Playing_Board.Cells.Find(obj => obj.Item.Transform == hit.transform).Item;
                     Release_Item(Drag_Item);
 
-                    Drag_Depth = CameraPlane.CameraToPointDepth(Camera.main, hit.point);
+                    Drag_Depth = Camera.main.transform.InverseTransformPoint(hit.point).z;
                     Drag_Joint = Drag_AttachJoint(hit.rigidbody, hit.point);
                     Scale(hit.transform, hit.transform.localScale * 0.7f, 0.1f);
                     Dragging = true;
@@ -86,25 +86,11 @@ public class Game : MonoBehaviour {
 
         Rigidbody rigid = obj.AddComponent<Rigidbody>();
         rigid.isKinematic = true;
-
-        ConfigurableJoint joint = obj.AddComponent<ConfigurableJoint>();
+        
+        FixedJoint joint = obj.AddComponent<FixedJoint>();
         joint.connectedBody = body;
-        joint.configuredInWorldSpace = true;
-        joint.xDrive = Drag_NewJointDrive(Drag_Force, Drag_Damping);
-        joint.yDrive = Drag_NewJointDrive(Drag_Force, Drag_Damping);
-        joint.zDrive = Drag_NewJointDrive(Drag_Force, Drag_Damping);
-        joint.slerpDrive = Drag_NewJointDrive(Drag_Force, Drag_Damping);
-        joint.rotationDriveMode = RotationDriveMode.Slerp;
 
         return obj.transform;
-    }
-    private JointDrive Drag_NewJointDrive(float force, float damping) {
-        JointDrive drive = new JointDrive();
-        drive.mode = JointDriveMode.Position;
-        drive.positionSpring = force;
-        drive.positionDamper = damping;
-        drive.maximumForce = Mathf.Infinity;
-        return drive;
     }
 
 #endregion
