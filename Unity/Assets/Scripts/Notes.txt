@@ -1,9 +1,16 @@
 ﻿
 
+NEXT TO DO: CHARACTER MODELS
+two chsracter models, human and comouter, facing each other
+first opponent can be tutorial wooden dummy
+turn based, each turn computer hits human
+human has weapon, each color mana associated with damage value
+each stone broken adds to damage dealt per turn
+but the mana board accumulation still remains its own mechanic where it costs mana to break non-dragging colors
+
 
 MAKE
 badges for each stone element
-add scratches to stones (bump maps)
 
 
 MANA BOARD
