@@ -5,7 +5,7 @@
 	<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
 	<ProductVersion>10.0.20506</ProductVersion>
 	<SchemaVersion>2.0</SchemaVersion>
-	<ProjectGuid>{5AE2D074-0B64-680C-EA00-6BF5EB9575C1}</ProjectGuid>
+	<ProjectGuid>{CD8C9303-404B-FB8D-6B9B-21988D5CAC0A}</ProjectGuid>
 	<OutputType>Library</OutputType>
 	<AppDesignerFolder>Properties</AppDesignerFolder>
 	<RootNamespace></RootNamespace>
@@ -46,12 +46,14 @@
 	</Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Drag Rigidbody\CameraPlane.cs" />
      <Compile Include="Assets\Scripts\Game.cs" />
+     <Compile Include="Assets\Scripts\__Camera.cs" />
      <Compile Include="Assets\Scripts\__Items.cs" />
      <Compile Include="Assets\Scripts\__Particles.cs" />
      <None Include="Assets\Scripts\Notes.txt" />
      <None Include="Assets\Hierarchy Organizer\Hierarchy Organizer 3.txt" />
+     <None Include="Assets\Shaders\Toony-Lighted.shader" />
+     <None Include="Assets\Shaders\Toony-LightedOutline.shader" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files (x86)/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/4.6.1/UnityEngine.UI.dll</HintPath>
  </Reference>

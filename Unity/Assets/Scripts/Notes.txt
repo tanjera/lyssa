@@ -1,39 +1,49 @@
 ﻿
 
-NEXT TO DO: CHARACTER MODELS
-two chsracter models, human and comouter, facing each other
-first opponent can be tutorial wooden dummy
-turn based, each turn computer hits human
-human has weapon, each color mana associated with damage value
-each stone broken adds to damage dealt per turn
-but the mana board accumulation still remains its own mechanic where it costs mana to break non-dragging colors
 
 
-MAKE
-badges for each stone element
-
-
-MANA BOARD
-uses pretty badge stones
-large stone is 10 mana
-medium stone is 5 mana
-small stone is 1 mana
-
-
-make prototype easier to play
-
-maybe add some fancy 3d objects?
-
-make icons for current mana amount counters
-add currency...
-add board items (silver coin, magical weapons, etc)
-start making beginning levels (enemies)
-
-MANA LOGIC: EVENTS
-make events trigger mana counting
+** BUGS **
+1) stones can be dragged outside the board when applied with lots of force; 
+	probably d/t configjoint -> fixedjoint with stone dragging, fixedjoint
+	may "rip" stone through the colliders...
 
 
 
-implement game logic re: dragging stone color accumulates mana of that color but other stone colors cost points to drag stone through & destroy...
-     
-move CameraPlane somewhere better integrated...
+
+** TO DO NEXT **
+1) have mana board show stones to represent mana amounts (also to represent health & xp)
+	each square can hold 4 small stones; then can turn all 4 into 1 big stone to equal "5"
+	... ditto for enemy health board.
+
+2) implement game logic re: dragging stone color accumulates mana of that color but other stone colors cost points to drag stone through & destroy...
+	then this game logic will show immediate results through mana board
+
+
+
+
+** CODE **
+- move CameraPlane somewhere better integrated...
+
+
+
+
+** AESTHETIC **
+1) rig Aska & Wooden Dummy for animation retargeting...
+2) trigger animations based on game logic...
+
+
+
+
+** GAME LOGIC **
+1) turn based, each turn computer hits human, human hits computer
+	each stone broken adds to damage dealt per turn (for example weapon is fire staff, does 3 dmg/1 red mana, 2 per yellow, 1 per white, etc)
+	human able to use abilities based on mana accumulated (color based)
+	but the mana board accumulation still remains its own mechanic where it costs mana to break non-dragging colors
+
+
+
+
+** EVENTUALLY... **
+- add currency...
+- add board items (silver coin, magical weapons, etc)
+

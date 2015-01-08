@@ -13,6 +13,12 @@ ModelImporter:
     100014: Head_MeshPart2
     100016: Robe
     100018: Eye_Pupils
+    100020: aska_body
+    100022: aska_eyes
+    100024: aska_hair
+    100026: aska_head
+    100028: aska_pupils
+    100030: aska_robe
     400000: //RootNode
     400002: Body
     400004: Eyes
@@ -23,6 +29,12 @@ ModelImporter:
     400014: Head_MeshPart2
     400016: Robe
     400018: Eye_Pupils
+    400020: aska_body
+    400022: aska_eyes
+    400024: aska_hair
+    400026: aska_head
+    400028: aska_pupils
+    400030: aska_robe
     2300000: Body
     2300002: Eyes
     2300004: Hair
@@ -31,6 +43,12 @@ ModelImporter:
     2300010: Head_MeshPart2
     2300012: Robe
     2300014: Eye_Pupils
+    2300016: aska_body
+    2300018: aska_eyes
+    2300020: aska_hair
+    2300022: aska_head
+    2300024: aska_pupils
+    2300026: aska_robe
     3300000: Body
     3300002: Eyes
     3300004: Hair
@@ -39,6 +57,12 @@ ModelImporter:
     3300010: Head_MeshPart2
     3300012: Robe
     3300014: Eye_Pupils
+    3300016: aska_body
+    3300018: aska_eyes
+    3300020: aska_hair
+    3300022: aska_head
+    3300024: aska_pupils
+    3300026: aska_robe
     4300000: Eyes
     4300002: Hair
     4300004: Body
@@ -47,6 +71,12 @@ ModelImporter:
     4300010: Head_MeshPart2
     4300012: Robe
     4300014: Eye_Pupils
+    4300016: aska_body
+    4300018: aska_eyes
+    4300020: aska_hair
+    4300022: aska_head
+    4300024: aska_pupils
+    4300026: aska_robe
     7400000: Default Take
     9500000: //RootNode
   materials:

@@ -7,18 +7,44 @@ using System.Collections.Generic;
 
 public class Game : MonoBehaviour {
 
-    public Player Player_1;
-    public Text Text_Level, Text_HP, Text_Mana;
+    public Player Player_1,
+        Enemy_1, Enemy_2, Enemy_3;
 
+    public bool has_Enemy_1, has_Enemy_2, has_Enemy_3;
 
     void Start() {
         Player_1 = new Player();
 
         // Construct the playing board
         Playing_Board__Container = GameObject.Find("Playing_Board__Item_Container").transform;
-        Build__Playing_Board();
+        Playing_Board__Positions = GameObject.Find("Playing_Board__Item_Positions").transform;
+        
+        // Populate the playing board
+        Build__Matrix(Playing_Board, Playing_Board__Positions);
         Populate__Playing_Board();
 
+        // Construct the player's mana board
+        Mana_Board_Player__Container = GameObject.Find("Mana_Board_Player__Item_Container").transform;
+        Mana_Board_Player__Positions = GameObject.Find("Mana_Board_Player__Item_Positions").transform;
+        Build__Matrix(Mana_Board_Player, Mana_Board_Player__Positions);
+
+        if (has_Enemy_1) { // Construct the 1st enemy's mana board
+            Mana_Board_Enemy_1__Container = GameObject.Find("Mana_Board_Enemy_1__Item_Container").transform;
+            Mana_Board_Enemy_1__Positions = GameObject.Find("Mana_Board_Enemy_1__Item_Positions").transform;
+            Build__Matrix(Mana_Board_Enemy_1, Mana_Board_Enemy_1__Positions);    
+        }
+
+        if (has_Enemy_2) { // Construct the 2nd enemy's mana board
+            Mana_Board_Enemy_2__Container = GameObject.Find("Mana_Board_Enemy_2__Item_Container").transform;
+            Mana_Board_Enemy_2__Positions = GameObject.Find("Mana_Board_Enemy_2__Item_Positions").transform;
+            Build__Matrix(Mana_Board_Enemy_2, Mana_Board_Enemy_2__Positions);
+        }
+
+        if (has_Enemy_3) { // Construct the 3rd enemy's mana board
+            Mana_Board_Enemy_3__Container = GameObject.Find("Mana_Board_Enemy_3__Item_Container").transform;
+            Mana_Board_Enemy_3__Positions = GameObject.Find("Mana_Board_Enemy_3__Item_Positions").transform;
+            Build__Matrix(Mana_Board_Enemy_3, Mana_Board_Enemy_3__Positions);
+        }
     }
 
 
@@ -33,13 +59,6 @@ public class Game : MonoBehaviour {
 
 
     void FixedUpdate() {
-        Text_Mana.text = String.Format("Bl {0} \nGr {1} \nRe {2} \nWh {3} \nYe {4}",
-            Player_1.Mana(Mana_Colors.Blue),
-            Player_1.Mana(Mana_Colors.Green),
-            Player_1.Mana(Mana_Colors.Red),
-            Player_1.Mana(Mana_Colors.White),
-            Player_1.Mana(Mana_Colors.Yellow));
-
         Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
     }
     void Update() {
@@ -64,7 +83,8 @@ public class Game : MonoBehaviour {
         if (Input.GetMouseButtonUp(0)) {
             if (Drag_Joint != null && Drag_Joint.gameObject != null)
                 Destroy(Drag_Joint.gameObject);
-            Destroy_Item(Drag_Item);
+            if (Drag_Item != null)
+                Destroy_Item(Drag_Item);
 
             Dragging = false;
             Drag_Item = null;
@@ -180,19 +200,19 @@ public class Game : MonoBehaviour {
     public static int Mana_Color = 5;
 
     public enum Mana_Colors {
-        Blue,
         Green,
-        Red,
+        Blue,
         White,
-        Yellow
+        Yellow,
+        Red
     }
     
     public static Color[] Lookup_Colors = new Color[] {
-        Color.blue,
         Color.green,
-        Color.red,
+        Color.blue,
         Color.white,
-        Color.yellow
+        Color.yellow,
+        Color.red
     };
 
 #endregion
@@ -411,32 +431,42 @@ public class Game : MonoBehaviour {
     #endregion
 
     Matrix Playing_Board = new Matrix(),
-        Mana_Board_1 = new Matrix(),
-        Mana_Board_2 = new Matrix();
+        Mana_Board_Player = new Matrix(),
+        Mana_Board_Enemy_1 = new Matrix(),
+        Mana_Board_Enemy_2 = new Matrix(),
+        Mana_Board_Enemy_3 = new Matrix();
 
     Transform Playing_Board__Container,
-        Mana_Board_1__Container,
-        Mana_Board_2__Container;
+        Mana_Board_Player__Container,
+        Mana_Board_Enemy_1__Container,
+        Mana_Board_Enemy_2__Container,
+        Mana_Board_Enemy_3__Container;
+    
+    Transform Playing_Board__Positions,
+        Mana_Board_Player__Positions,
+        Mana_Board_Enemy_1__Positions,
+        Mana_Board_Enemy_2__Positions,
+        Mana_Board_Enemy_3__Positions;
 
-    public GameObject Prototype__Stone9_Generic;
+    public GameObject Prototype__Stone9,
+        Prototype__Stone9_Mini;
     public GameObject[] Prototype__Particles = new GameObject[Mana_Color];
 
     Transform Item_Dragging;
 
-    void Build__Playing_Board() {
+    void Build__Matrix(Matrix incMatrix, Transform incPositions) {
         // Run through all __Item_Positions...
-        List<Transform> itemPositions = new List<Transform>(GameObject.Find("Playing_Board__Item_Positions").GetComponentsInChildren<Transform>());
+        List<Transform> itemPositions = new List<Transform>(incPositions.GetComponentsInChildren<Transform>());
         itemPositions = itemPositions.FindAll(obj => obj.name.Contains(";"));
 
-        itemPositions.ForEach(obj => {
+        for (int i = 0; i < itemPositions.Count; i++) {
             // Make sure we're dealing with an actual item position: gameobject naming convention "[X];[Y]"
             Cell newCell = new Cell();
-            newCell.Location = obj;
-            newCell.X = int.Parse(obj.name.Split(new char[] { ';' })[0]);
-            newCell.Y = int.Parse(obj.name.Split(new char[] { ';' })[1]);
-            Playing_Board.Cells.Add(newCell);
-        });
-
+            newCell.Location = itemPositions[i];
+            newCell.X = int.Parse(itemPositions[i].name.Split(new char[] { ';' })[0]);
+            newCell.Y = int.Parse(itemPositions[i].name.Split(new char[] { ';' })[1]);
+            incMatrix.Cells.Add(newCell);
+        }
     }
     void Populate__Playing_Board() {
         Playing_Board.Cells.ForEach(obj => {
@@ -509,7 +539,7 @@ public class Game : MonoBehaviour {
     public Items Randomize__Stone(Transform incParent) {
         Items thisStone = new Items();
         thisStone.Type = Items.Types.Stone;
-        thisStone.Object = (GameObject)GameObject.Instantiate(Prototype__Stone9_Generic);
+        thisStone.Object = (GameObject)GameObject.Instantiate(Prototype__Stone9);
         thisStone.Color = (Game.Mana_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(Mana_Colors)).Length);
 
         if (thisStone.Object.renderer.material != null)
