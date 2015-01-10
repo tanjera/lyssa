@@ -14,6 +14,7 @@ public class Game : MonoBehaviour {
 
     void Start() {
         Player_1 = new Player();
+        State__Major = Game_States.Initializing;
 
         // Construct the playing board
         Playing_Board__Container = GameObject.Find("Playing_Board__Item_Container").transform;
@@ -45,13 +46,35 @@ public class Game : MonoBehaviour {
             Mana_Board_Enemy_3__Positions = GameObject.Find("Mana_Board_Enemy_3__Item_Positions").transform;
             Build__Matrix(Mana_Board_Enemy_3, Mana_Board_Enemy_3__Positions);
         }
+
+        State__Major = Game_States.Running;
+        State__Minor = Game_Activities.Turn_Player;
     }
 
 
 #region ROUTINE & INPUT
 
-    bool Dragging = false;
+    enum Game_States {
+        Initializing,
+        Paused,
+        Running
+    }
+
+    enum Game_Activities {
+        Null,
+        Turn_Player__Idle,
+        Turn_Player__Dragging,
+        Turn_Player__Attack,
+        Turn_Enemy1,
+        Turn_Enemy2,
+        Turn_Enemy3
+    }
+
+    Game_States State__Major;      
+    Game_Activities State__Minor;
+ 
     Items Drag_Item;
+    Mana_Colors Drag_Color;
     Transform Drag_Joint;
     float Drag_Depth,
         Drag_Force = 1000,
@@ -63,40 +86,60 @@ public class Game : MonoBehaviour {
     }
     void Update() {
 
-        if (Input.GetMouseButtonDown(0)) {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            if (Physics.Raycast(ray, out hit)) {
-                if (hit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Interactive)) {
-
-                    Drag_Item = Playing_Board.Cells.Find(obj => obj.Item.Transform == hit.transform).Item;
-                    Release_Item(Drag_Item);
-
-                    Drag_Depth = Camera.main.transform.InverseTransformPoint(hit.point).z;
-                    Drag_Joint = Drag_AttachJoint(hit.rigidbody, hit.point);
-                    Scale(hit.transform, hit.transform.localScale * 0.7f, 0.1f);
-                    Dragging = true;
-                }
-            }
-        }
-
-        if (Input.GetMouseButtonUp(0)) {
-            if (Drag_Joint != null && Drag_Joint.gameObject != null)
-                Destroy(Drag_Joint.gameObject);
-            if (Drag_Item != null)
-                Destroy_Item(Drag_Item);
-
-            Dragging = false;
-            Drag_Item = null;
-
-            Refresh__Playing_Board();
-        }
-
-        if (Input.GetMouseButton(0)) {
-            if (Drag_Joint == null)
+        switch (State__Major) {
+            default:
+            case Game_States.Initializing:
                 return;
-            Drag_Joint.position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        }
+
+            case Game_States.Paused:
+                break;
+
+            case Game_States.Running: {
+                
+                /* Player input if it's the player's turn, to drag stones */
+                if (State__Minor == Game_Activities.Turn_Player__Idle) {
+                    if (Input.GetMouseButtonDown(0)) {
+                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                        RaycastHit hit;
+                        if (Physics.Raycast(ray, out hit)) {
+                            if (hit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Interactive)) {
+
+                                Drag_Item = Playing_Board.Cells.Find(obj => obj.Item.Transform == hit.transform).Item;
+                                Drag_Color = Drag_Item.Color;   // Last color dragged, never cleared, only reassigned for reference.
+                                Release_Item(Drag_Item);
+
+                                Drag_Depth = Camera.main.transform.InverseTransformPoint(hit.point).z;
+                                Drag_Joint = Drag_AttachJoint(hit.rigidbody, hit.point);
+                                Scale(hit.transform, hit.transform.localScale * 0.7f, 0.1f);
+                                State__Minor = Game_Activities.Turn_Player__Dragging;
+                            }
+                        }
+                    }
+                }
+
+                if (State__Minor == Game_Activities.Turn_Player__Dragging) {
+                    if (Input.GetMouseButton(0)) {
+                        if (Drag_Joint == null)
+                            return;
+                        Drag_Joint.position = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                    }
+
+                    if (Input.GetMouseButtonUp(0)) {
+                        if (Drag_Joint != null && Drag_Joint.gameObject != null)
+                            Destroy(Drag_Joint.gameObject);
+                        if (Drag_Item != null)
+                            Destroy_Item(Drag_Item);
+
+                        State__Minor = Game_Activities.Turn_Player__Attack;
+                        Drag_Item = null;
+
+                        Refresh__Playing_Board();
+                    } 
+                }
+
+                break;
+            }
+        }   
     }
 
     Transform Drag_AttachJoint(Rigidbody body, Vector3 attachPoint) {
@@ -221,22 +264,16 @@ public class Game : MonoBehaviour {
 #region PLAYER
 
     public class Player {
-        Character _Character = new List_Characters().Chirba;
-        int[] _Mana = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
+        public Character _Character = new List_Characters().Chirba;
+        public int[] Mana_Count = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length],
+                        Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
 
-        public Character Character {
-            get { return _Character; }
-        }
-
-        public int Mana(Game.Mana_Colors Color) { return _Mana[(int)Color]; }
-        public int[] Mana() { return _Mana; }
-        public void Add_Mana(Game.Mana_Colors Color, int Amount) { _Mana[(int)Color] += Amount; }
-
-        public bool Use_Mana(Game.Mana_Colors Color, int Amount) {
-            if (_Mana[(int)Color] < Amount)
+        public int Mana(int[] manaArray, Game.Mana_Colors Color) { return manaArray[(int)Color]; }
+        public void Add_Mana(int[] manaArray, Game.Mana_Colors Color, int Amount) { manaArray[(int)Color] += Amount; }
+        public bool Use_Mana(int [] manaArray, Game.Mana_Colors Color, int Amount) {
+            if (manaArray[(int)Color] < Amount)
                 return false;
-
-            _Mana[(int)Color] -= Amount;
+            manaArray[(int)Color] -= Amount;
             return true;
         }
     }
@@ -514,7 +551,18 @@ public class Game : MonoBehaviour {
         });
     }
     void Destroy_Item(Items incItem) {
-        Player_1.Add_Mana(incItem.Color, 1);
+        if (State__Minor == Game_Activities.Turn_Player) {
+            // Add to the mana buffer (for calculating this turn's attack damage, etc)
+            Player_1.Add_Mana(Player_1.Mana_Buffer, incItem.Color, 1);
+
+            // If we're hitting the same color we're dragging, add it to the mana pool
+            if (Drag_Color == incItem.Color)
+                Player_1.Add_Mana(Player_1.Mana_Count, incItem.Color, 1);
+            else { // Otherwise... subtract it from *that* color's mana pool... otherwise subtract from *this* color's mana pool
+                if (!Player_1.Use_Mana(Player_1.Mana_Count, incItem.Color, 1))
+                    Player_1.Use_Mana(Player_1.Mana_Count, Drag_Color, 1);
+            }
+        }
 
         GameObject instParticles = (GameObject)GameObject.Instantiate(Prototype__Particles[incItem.Color.GetHashCode()]);
         instParticles.transform.Translate(new Vector3(incItem.Object.transform.position.x, 0, incItem.Object.transform.position.y));
