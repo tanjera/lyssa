@@ -13,8 +13,18 @@ public class Game : MonoBehaviour {
     public bool has_Enemy_1, has_Enemy_2, has_Enemy_3;
 
     void Start() {
+        
+        State__Major = Game_States__Major.Initializing;
+        
         Player_1 = new Player();
-        State__Major = Game_States.Initializing;
+        Enemy_1 = new Player();
+        Enemy_2 = new Player();
+        Enemy_3 = new Player();
+
+        Player_1.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
+        Enemy_1.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
+        Enemy_2.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
+        Enemy_3.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
 
         // Construct the playing board
         Playing_Board__Container = GameObject.Find("Playing_Board__Item_Container").transform;
@@ -47,20 +57,35 @@ public class Game : MonoBehaviour {
             Build__Matrix(Mana_Board_Enemy_3, Mana_Board_Enemy_3__Positions);
         }
 
-        State__Major = Game_States.Running;
-        State__Minor = Game_Activities.Turn_Player;
+        State__Major = Game_States__Major.Running;
+        State__Minor = Game_States__Minor.Turn_Player__Idle;
+
+        Hack__Setup_Test_States();
+    }
+
+    void Hack__Setup_Test_States() {
+        Player_1.Name = "Human";
+        Player_1.Health = 100;
+        Player_1.Health_Max = 100;
+        Player_1.Damage = new int[5] { 1, 2, 3, 3, 1 };
+        Player_1.Target = Enemy_1;
+
+        Enemy_1.Name = "Enemy 1";
+        Enemy_1.Health = 100;
+        Enemy_1.Health_Max = 100;
+        Enemy_1.Damage = new int[5] { 1, 2, 3, 3, 1 };
+        Enemy_1.Target = Player_1;
     }
 
 
 #region ROUTINE & INPUT
 
-    enum Game_States {
+    enum Game_States__Major {
         Initializing,
         Paused,
         Running
     }
-
-    enum Game_Activities {
+    enum Game_States__Minor {
         Null,
         Turn_Player__Idle,
         Turn_Player__Dragging,
@@ -70,9 +95,9 @@ public class Game : MonoBehaviour {
         Turn_Enemy3
     }
 
-    Game_States State__Major;      
-    Game_Activities State__Minor;
- 
+    Game_States__Major State__Major;      
+    Game_States__Minor State__Minor;
+
     Items Drag_Item;
     Mana_Colors Drag_Color;
     Transform Drag_Joint;
@@ -88,16 +113,16 @@ public class Game : MonoBehaviour {
 
         switch (State__Major) {
             default:
-            case Game_States.Initializing:
+            case Game_States__Major.Initializing:
                 return;
 
-            case Game_States.Paused:
+            case Game_States__Major.Paused:
                 break;
 
-            case Game_States.Running: {
+            case Game_States__Major.Running: {
                 
                 /* Player input if it's the player's turn, to drag stones */
-                if (State__Minor == Game_Activities.Turn_Player__Idle) {
+                if (State__Minor == Game_States__Minor.Turn_Player__Idle) {
                     if (Input.GetMouseButtonDown(0)) {
                         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
                         RaycastHit hit;
@@ -111,13 +136,13 @@ public class Game : MonoBehaviour {
                                 Drag_Depth = Camera.main.transform.InverseTransformPoint(hit.point).z;
                                 Drag_Joint = Drag_AttachJoint(hit.rigidbody, hit.point);
                                 Scale(hit.transform, hit.transform.localScale * 0.7f, 0.1f);
-                                State__Minor = Game_Activities.Turn_Player__Dragging;
+                                Change_State(Game_States__Minor.Turn_Player__Dragging);
                             }
                         }
                     }
                 }
 
-                if (State__Minor == Game_Activities.Turn_Player__Dragging) {
+                if (State__Minor == Game_States__Minor.Turn_Player__Dragging) {
                     if (Input.GetMouseButton(0)) {
                         if (Drag_Joint == null)
                             return;
@@ -130,7 +155,7 @@ public class Game : MonoBehaviour {
                         if (Drag_Item != null)
                             Destroy_Item(Drag_Item);
 
-                        State__Minor = Game_Activities.Turn_Player__Attack;
+                        Change_State(Game_States__Minor.Turn_Player__Attack);
                         Drag_Item = null;
 
                         Refresh__Playing_Board();
@@ -140,6 +165,21 @@ public class Game : MonoBehaviour {
                 break;
             }
         }   
+    }
+    void Change_State(Game_States__Minor incState) {
+        State__Minor = incState;
+
+        if (incState == Game_States__Minor.Turn_Player__Attack) {
+            /* HACK: should check active players, iterate each one, give computer turn for gathering mana, etc */
+            Player_1.Attack(Player_1.Target);
+            Change_State(Game_States__Minor.Turn_Player__Idle);
+        }
+    }
+    void Update_Stats(Player sender, EventArgs e) {
+        Debug.Log(String.Format("{0} {1}/{2} : {3} G  {4} B  {5} W  {6} Y  {7} R :: {8} {9} {10} {11} {12}",
+            sender.Name, sender.Health, sender.Health_Max,
+            sender.Mana_Count[0], sender.Mana_Count[1], sender.Mana_Count[2], sender.Mana_Count[3], sender.Mana_Count[4], 
+            sender.Mana_Buffer[0], sender.Mana_Buffer[1], sender.Mana_Buffer[2], sender.Mana_Buffer[3], sender.Mana_Buffer[4]));
     }
 
     Transform Drag_AttachJoint(Rigidbody body, Vector3 attachPoint) {
@@ -264,147 +304,58 @@ public class Game : MonoBehaviour {
 #region PLAYER
 
     public class Player {
-        public Character _Character = new List_Characters().Chirba;
+        public string Name;
+        public int[] Damage = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
+
+
+        int _Health, _Health_Max;
         public int[] Mana_Count = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length],
                         Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
 
+        public Player Target;
+
+        public delegate void Stats_Changed_Handler(Player sender, EventArgs e);
+        public event Stats_Changed_Handler Stats_Changed;
+
+        public int Health {
+            get { return _Health; }
+            set { _Health = value; Stats_Changed(this, new EventArgs()); }
+        }
+        public int Health_Max {
+            get { return _Health_Max; }
+            set { _Health_Max = value; Stats_Changed(this, new EventArgs()); }
+        }
+
         public int Mana(int[] manaArray, Game.Mana_Colors Color) { return manaArray[(int)Color]; }
-        public void Add_Mana(int[] manaArray, Game.Mana_Colors Color, int Amount) { manaArray[(int)Color] += Amount; }
-        public bool Use_Mana(int [] manaArray, Game.Mana_Colors Color, int Amount) {
-            if (manaArray[(int)Color] < Amount)
+        public void Add_Mana(int[] manaArray, Game.Mana_Colors Color, int Amount) { 
+            manaArray[(int)Color] += Amount;
+            Stats_Changed(this, new EventArgs());
+        }
+        public bool Use_Mana(int [] manaArray, Mana_Colors incColor, int Amount) {
+            if (manaArray[(int)incColor] < Amount)
                 return false;
-            manaArray[(int)Color] -= Amount;
+            manaArray[(int)incColor] -= Amount;
+
+            Stats_Changed(this, new EventArgs());
             return true;
         }
+
+        public void Attack(Player incTarget) {
+            int totalDamage = 0;
+            for (int i = 0; i < Enum.GetValues(typeof(Game.Mana_Colors)).Length; i++)
+                totalDamage += Mana_Buffer[i] * Damage[i];
+            
+            incTarget.Health = incTarget.Health - totalDamage < 0 ? 0 : incTarget.Health - totalDamage;
+            Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
+            Stats_Changed(this, new EventArgs());
+        }
     }
 
 
 #endregion
 
 
-#region CHARACTER
-
-    public class Character {
-        string Name;
-        int Level_Current, Level_Max;
-        int HP_Base, HP_Increments;
-
-        int HP_Current, HP_Max;
-        List<Skill> Skills = new List<Skill>();
-
-
-        public Character(string incName, int incLevel_Max, int incHP_Base, int incHP_Increments, List<Skill> incSkills) {
-            Name = incName;
-            Level_Current = 1;
-            Level_Max = incLevel_Max;
-
-            HP_Base = incHP_Base;
-            HP_Increments = incHP_Increments;
-
-            HP_Max = Calculate__Health_Max();
-            HP_Current = HP_Max;
-
-            Skills = incSkills;
-        }
-
-        public int Level {
-            get { return Level_Current; }
-        }
-        public void Add_Level(int levelUp) {
-            levelUp = Level_Current + levelUp > Level_Max
-                ? Level_Max - Level_Current : levelUp;
-
-            Level_Current += levelUp;
-            HP_Max += Calculate__Health_Increase(levelUp);
-            HP_Current = HP_Max;
-        }
-
-        public int Health_Max {
-            get { return HP_Max; }
-            set { HP_Max = value; }
-        }
-        public int Health_Current {
-            get { return HP_Current; }
-            set { HP_Current = value; }
-        }
-        public void Adjust__Health_Current(int incValue) { HP_Current += incValue; }
-        public void Adjust__Health_Max(int incValue) { HP_Max += incValue; }
-        public int Calculate__Health_Max() { return HP_Base + (int)((Level_Current - 1) * HP_Increments); }
-        public int Calculate__Health_Increase(int levelAdjust) { return (int)(levelAdjust * HP_Increments); }
-    }
-
-    public class List_Characters {
-        public Character Chirba = new Character("Chirba", 100, 50, 55,
-            new List<Skill>() {
-            List_Skills.Fireball,
-            List_Skills.Ice_Lance,
-            List_Skills.Lightning_Bolt
-        });
-    }
-
-
-#endregion
-
-
-#region SKILLS
-
-    public class Skill {
-        public enum Types {
-            Magic,
-            Physical
-        }
-
-        public class Tier {
-            int Level;
-            int Damage;
-            int[] Mana;     // Amount of mana required in each color (ordered by Definitions.Mana_Colors enum)
-
-            public Tier(int incLevel, int incDamage, int[] incMana) {
-                Level = incLevel;
-                Damage = incDamage;
-                Mana = incMana;
-            }
-        }
-
-        string Name;
-        Types Type;
-        List<Tier> Tiers = new List<Tier>();
-
-
-        public Skill(string incName, Types incType, List<Tier> incTiers) {
-            Name = incName;
-            Type = incType;
-            Tiers = incTiers;
-        }
-    }
-
-    public static class List_Skills {
-        public static Skill Fireball = new Skill("Fireball", Skill.Types.Magic, new List<Skill.Tier>() {
-            new Skill.Tier(1, 5,   new int[] {0, 0, 0, 0, 5, 0, 0}),
-            new Skill.Tier(2, 10,  new int[] {0, 0, 0, 0, 6, 0, 0}),
-            new Skill.Tier(3, 15,  new int[] {2, 0, 0, 0, 6, 0, 0})
-        });
-
-        public static Skill Ice_Lance = new Skill("Ice Lance", Skill.Types.Magic, new List<Skill.Tier>() {
-            new Skill.Tier(1, 8,   new int[] {0, 5, 0, 0, 0, 0, 0}),
-            new Skill.Tier(2, 12,  new int[] {0, 8, 0, 0, 0, 0, 0}),
-            new Skill.Tier(3, 18,  new int[] {0, 8, 0, 0, 0, 2, 0}),
-            new Skill.Tier(4, 24,  new int[] {0, 10, 0, 0, 0, 4, 0})
-        });
-
-        public static Skill Lightning_Bolt = new Skill("Lightning Bolt", Skill.Types.Magic, new List<Skill.Tier>() {
-            new Skill.Tier(1, 10,  new int[] {0, 6, 0, 0, 0, 0, 0}),
-            new Skill.Tier(2, 18,  new int[] {0, 9, 0, 0, 0, 0, 0}),
-            new Skill.Tier(3, 24,  new int[] {2, 10, 0, 0, 0, 0, 0}),
-            new Skill.Tier(4, 32,  new int[] {3, 12, 0, 0, 0, 0, 0})
-        });
-    }
-
-
-#endregion
-
-
-#region PLAYING BOARD
+#region PLAYING BOARD & MANA BOARDS
 
     #region MATRICES (PLAYING & MANA BOARDS)
 
@@ -551,7 +502,7 @@ public class Game : MonoBehaviour {
         });
     }
     void Destroy_Item(Items incItem) {
-        if (State__Minor == Game_Activities.Turn_Player) {
+        if (State__Minor == Game_States__Minor.Turn_Player__Dragging) {
             // Add to the mana buffer (for calculating this turn's attack damage, etc)
             Player_1.Add_Mana(Player_1.Mana_Buffer, incItem.Color, 1);
 
