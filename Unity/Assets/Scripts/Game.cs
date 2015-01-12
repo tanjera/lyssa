@@ -29,8 +29,6 @@ public class Game : MonoBehaviour {
         // Construct the playing board
         Playing_Board__Container = GameObject.Find("Playing_Board__Item_Container").transform;
         Playing_Board__Positions = GameObject.Find("Playing_Board__Item_Positions").transform;
-        
-        // Populate the playing board
         Build__Matrix(Playing_Board, Playing_Board__Positions);
         Populate__Playing_Board();
 
@@ -38,23 +36,27 @@ public class Game : MonoBehaviour {
         Mana_Board_Player__Container = GameObject.Find("Mana_Board_Player__Item_Container").transform;
         Mana_Board_Player__Positions = GameObject.Find("Mana_Board_Player__Item_Positions").transform;
         Build__Matrix(Mana_Board_Player, Mana_Board_Player__Positions);
+        Populate__Mana_Board(Mana_Board_Player);
 
         if (has_Enemy_1) { // Construct the 1st enemy's mana board
             Mana_Board_Enemy_1__Container = GameObject.Find("Mana_Board_Enemy_1__Item_Container").transform;
             Mana_Board_Enemy_1__Positions = GameObject.Find("Mana_Board_Enemy_1__Item_Positions").transform;
-            Build__Matrix(Mana_Board_Enemy_1, Mana_Board_Enemy_1__Positions);    
+            Build__Matrix(Mana_Board_Enemy_1, Mana_Board_Enemy_1__Positions);
+            Populate__Mana_Board(Mana_Board_Enemy_1);
         }
 
         if (has_Enemy_2) { // Construct the 2nd enemy's mana board
             Mana_Board_Enemy_2__Container = GameObject.Find("Mana_Board_Enemy_2__Item_Container").transform;
             Mana_Board_Enemy_2__Positions = GameObject.Find("Mana_Board_Enemy_2__Item_Positions").transform;
             Build__Matrix(Mana_Board_Enemy_2, Mana_Board_Enemy_2__Positions);
+            Populate__Mana_Board(Mana_Board_Enemy_2);
         }
 
         if (has_Enemy_3) { // Construct the 3rd enemy's mana board
             Mana_Board_Enemy_3__Container = GameObject.Find("Mana_Board_Enemy_3__Item_Container").transform;
             Mana_Board_Enemy_3__Positions = GameObject.Find("Mana_Board_Enemy_3__Item_Positions").transform;
             Build__Matrix(Mana_Board_Enemy_3, Mana_Board_Enemy_3__Positions);
+            Populate__Mana_Board(Mana_Board_Enemy_3);
         }
 
         State__Major = Game_States__Major.Running;
@@ -67,6 +69,8 @@ public class Game : MonoBehaviour {
         Player_1.Name = "Human";
         Player_1.Health = 100;
         Player_1.Health_Max = 100;
+        Player_1.Experience = 0;
+        Player_1.Experience_Max = 100;
         Player_1.Damage = new int[5] { 1, 2, 3, 3, 1 };
         Player_1.Target = Enemy_1;
 
@@ -176,6 +180,8 @@ public class Game : MonoBehaviour {
         }
     }
     void Update_Stats(Player sender, EventArgs e) {
+        Refresh__Mana_Boards();
+
         Debug.Log(String.Format("{0} {1}/{2} : {3} G  {4} B  {5} W  {6} Y  {7} R :: {8} {9} {10} {11} {12}",
             sender.Name, sender.Health, sender.Health_Max,
             sender.Mana_Count[0], sender.Mana_Count[1], sender.Mana_Count[2], sender.Mana_Count[3], sender.Mana_Count[4], 
@@ -281,6 +287,7 @@ public class Game : MonoBehaviour {
     public static string Layer__Interactive = "Interactive";
 
     public static int Mana_Color = 5;
+    public static float Mana_Board__Multiplier = 2.5f;
 
     public enum Mana_Colors {
         Green,
@@ -298,6 +305,18 @@ public class Game : MonoBehaviour {
         Color.red
     };
 
+    public enum Mana_Board {
+        Experience,
+        Health,
+        Green,
+        Blue,
+        White,
+        Yellow,
+        Red
+    }
+
+    
+
 #endregion
 
 
@@ -308,7 +327,8 @@ public class Game : MonoBehaviour {
         public int[] Damage = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
 
 
-        int _Health, _Health_Max;
+        int _Health, _Health_Max,
+            _Experience, _Experience_Max;
         public int[] Mana_Count = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length],
                         Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
 
@@ -324,6 +344,15 @@ public class Game : MonoBehaviour {
         public int Health_Max {
             get { return _Health_Max; }
             set { _Health_Max = value; Stats_Changed(this, new EventArgs()); }
+        }
+
+        public int Experience {
+            get { return _Experience; }
+            set { _Experience = value; Stats_Changed(this, new EventArgs()); }
+        }
+        public int Experience_Max {
+            get { return _Experience_Max; }
+            set { _Experience_Max = value; Stats_Changed(this, new EventArgs()); }
         }
 
         public int Mana(int[] manaArray, Game.Mana_Colors Color) { return manaArray[(int)Color]; }
@@ -344,7 +373,7 @@ public class Game : MonoBehaviour {
             int totalDamage = 0;
             for (int i = 0; i < Enum.GetValues(typeof(Game.Mana_Colors)).Length; i++)
                 totalDamage += Mana_Buffer[i] * Damage[i];
-            
+
             incTarget.Health = incTarget.Health - totalDamage < 0 ? 0 : incTarget.Health - totalDamage;
             Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
             Stats_Changed(this, new EventArgs());
@@ -385,6 +414,10 @@ public class Game : MonoBehaviour {
 
         public bool isEmpty {
             get { return Item == null; }
+        }
+        public bool Active {
+            get { return Item == null || Item.Object == null ? false : Item.Object.activeSelf; }
+            set { if (Item != null && Item.Object != null) Item.Object.SetActive(value); }
         }
 
         public Vector2 Coords {
@@ -437,7 +470,7 @@ public class Game : MonoBehaviour {
         Mana_Board_Enemy_3__Positions;
 
     public GameObject Prototype__Stone9,
-        Prototype__Stone9_Mini;
+                        Prototype__Stone9_Mini;
     public GameObject[] Prototype__Particles = new GameObject[Mana_Color];
 
     Transform Item_Dragging;
@@ -458,13 +491,17 @@ public class Game : MonoBehaviour {
     }
     void Populate__Playing_Board() {
         Playing_Board.Cells.ForEach(obj => {
-            obj.Item = Create_Stone(obj);
+            obj.Item = Create_Item(obj, Items.Types.Stone, Prototype__Stone9,
+                (Mana_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(Mana_Colors)).Length),
+                Playing_Board__Container, true, true);
         });
     }
     void Refresh__Playing_Board() {
         Playing_Board.Cells.ForEach(obj => {
             if (obj.isEmpty)
-                obj.Item = Create_Stone(obj);
+                obj.Item = Create_Item(obj, Items.Types.Stone, Prototype__Stone9,
+                (Mana_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(Mana_Colors)).Length),
+                Playing_Board__Container, true, true);
         });
     }
     void Iterate_Down__Playing_Board() {
@@ -482,6 +519,99 @@ public class Game : MonoBehaviour {
                     }
                 }
             });
+        }
+    }
+    void Populate__Mana_Board(Matrix incMatrix) {
+        incMatrix.Cells.ForEach(cell => {
+            if (cell.Item != null)
+                return;
+        
+            if (incMatrix == Mana_Board_Player) {
+                    if (cell.X == Mana_Board.Experience.GetHashCode()) {
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Yellow, Mana_Board_Player__Container, false, false); 
+                    }
+                    else if (cell.X == Mana_Board.Health.GetHashCode()) {
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Player__Container, false, false);
+                    }
+                    else if (cell.X == Mana_Board.Green.GetHashCode()) {
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Green, Mana_Board_Player__Container, false, false);
+                    }
+                    else if (cell.X == Mana_Board.Blue.GetHashCode()) {
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Blue, Mana_Board_Player__Container, false, false);
+                    }
+                    else if (cell.X == Mana_Board.White.GetHashCode()) {
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.White, Mana_Board_Player__Container, false, false);
+                    }
+                    else if (cell.X == Mana_Board.Yellow.GetHashCode()) {
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Yellow, Mana_Board_Player__Container, false, false);
+                    }
+                    else if (cell.X == Mana_Board.Red.GetHashCode()) {
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Player__Container, false, false);
+                    }
+            
+            } else if (incMatrix == Mana_Board_Enemy_1)
+                cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Enemy_1__Container, false, false);
+            else if (incMatrix == Mana_Board_Enemy_2)
+                cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Enemy_2__Container, false, false);
+            else if (incMatrix == Mana_Board_Enemy_3)
+                cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Enemy_3__Container, false, false);
+
+        });
+    }
+    void Refresh__Mana_Boards() {
+        int cellCount;
+        List<Cell> cellList;
+
+        // Update player's experience bar by %
+        cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.Experience.GetHashCode());
+        cellCount = cellList.Count;
+        for (int i = 0; i < cellCount; i++)
+            if (Player_1.Experience_Max > 0)
+                cellList[i].Active = Player_1.Experience_Max > 0 && cellList[i].Y < ((float)Player_1.Experience / (float)Player_1.Experience_Max) * cellCount;
+
+        // Update player's health bar by %
+        cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.Health.GetHashCode());
+        cellCount = cellList.Count;
+        for (int i = 0; i < cellCount; i++)
+            if (Player_1.Health_Max > 0)
+                cellList[i].Active = Player_1.Health_Max > 0 && cellList[i].Y < ((float)Player_1.Health / (float)Player_1.Health_Max) * cellCount;
+
+        // Update the player's mana counts
+        cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.Green.GetHashCode());
+        for (int i = 0; i < cellList.Count; i++)
+            cellList[i].Active = cellList[i].Y <= (Player_1.Mana(Player_1.Mana_Count, Mana_Colors.Green) / Mana_Board__Multiplier) - 1;
+        cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.Blue.GetHashCode());
+        for (int i = 0; i < cellList.Count; i++)
+            cellList[i].Active = cellList[i].Y <= (Player_1.Mana(Player_1.Mana_Count, Mana_Colors.Blue) / Mana_Board__Multiplier) - 1;
+        cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.White.GetHashCode());
+        for (int i = 0; i < cellList.Count; i++)
+            cellList[i].Active = cellList[i].Y <= (Player_1.Mana(Player_1.Mana_Count, Mana_Colors.White) / Mana_Board__Multiplier) - 1;
+        cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.Yellow.GetHashCode());
+        for (int i = 0; i < cellList.Count; i++)
+            cellList[i].Active = cellList[i].Y <= (Player_1.Mana(Player_1.Mana_Count, Mana_Colors.Yellow) / Mana_Board__Multiplier) - 1;
+        cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.Red.GetHashCode());
+        for (int i = 0; i < cellList.Count; i++)
+            cellList[i].Active = cellList[i].Y <= (Player_1.Mana(Player_1.Mana_Count, Mana_Colors.Red) / Mana_Board__Multiplier) - 1;
+
+
+        // Update enemies' health bars
+        if (has_Enemy_1) {
+            cellCount = Mana_Board_Enemy_1.Cells.Count;
+            for (int i = 0; i < cellCount; i++)
+                if (Enemy_1.Health_Max > 0)
+                    Mana_Board_Enemy_1.Cells[i].Active = Enemy_1.Health_Max > 0 && Mana_Board_Enemy_1.Cells[i].Y < ((float)Enemy_1.Health / (float)Enemy_1.Health_Max) * cellCount;
+        }
+        if (has_Enemy_2) {
+            cellCount = Mana_Board_Enemy_2.Cells.Count;
+            for (int i = 0; i < cellCount; i++)
+                if (Enemy_2.Health_Max > 0)
+                    Mana_Board_Enemy_2.Cells[i].Active = Enemy_2.Health_Max > 0 && Mana_Board_Enemy_2.Cells[i].Y < ((float)Enemy_2.Health / (float)Enemy_2.Health_Max) * cellCount;
+        }
+        if (has_Enemy_3) {
+            cellCount = Mana_Board_Enemy_3.Cells.Count;
+            for (int i = 0; i < cellCount; i++)
+                if (Enemy_3.Health_Max > 0)
+                    Mana_Board_Enemy_3.Cells[i].Active = Enemy_3.Health_Max > 0 && Mana_Board_Enemy_3.Cells[i].Y < ((float)Enemy_3.Health / (float)Enemy_3.Health_Max) * cellCount;
         }
     }
 
@@ -505,7 +635,7 @@ public class Game : MonoBehaviour {
         if (State__Minor == Game_States__Minor.Turn_Player__Dragging) {
             // Add to the mana buffer (for calculating this turn's attack damage, etc)
             Player_1.Add_Mana(Player_1.Mana_Buffer, incItem.Color, 1);
-
+            
             // If we're hitting the same color we're dragging, add it to the mana pool
             if (Drag_Color == incItem.Color)
                 Player_1.Add_Mana(Player_1.Mana_Count, incItem.Color, 1);
@@ -524,28 +654,26 @@ public class Game : MonoBehaviour {
         if (incCell != null)
             incCell.Item = null;
     }
-
-    Items Create_Stone(Cell incCell) {
+    Items Create_Item(Cell incCell, Items.Types incType, GameObject incPrototype, Mana_Colors incColor, Transform incParent, bool attachCollision, bool setActive) {
         Items eachItem;
-        eachItem = Randomize__Stone(Playing_Board__Container);
+        eachItem = new Items();
+        eachItem.Type = incType;
+        eachItem.Object = (GameObject)GameObject.Instantiate(incPrototype);
+        eachItem.Object.transform.parent = incParent;
+        
+        eachItem.Color = incColor;
+        if (eachItem.Object.renderer.material != null)
+            eachItem.Object.renderer.material.color = Lookup_Colors[eachItem.Color.GetHashCode()];
 
-        eachItem.Object.GetComponent<__Items>().Item_Collision += new __Items.Item_Collision_Handler(Collide_Items);
+        if (attachCollision)
+            eachItem.Object.GetComponent<__Items>().Item_Collision += new __Items.Item_Collision_Handler(Collide_Items);
+
         eachItem.Object.transform.Translate(incCell.Location.position);
-        eachItem.Object.SetActive(true);
+        
+        if (setActive)
+            eachItem.Object.SetActive(true);
 
         return eachItem;
-    }
-    public Items Randomize__Stone(Transform incParent) {
-        Items thisStone = new Items();
-        thisStone.Type = Items.Types.Stone;
-        thisStone.Object = (GameObject)GameObject.Instantiate(Prototype__Stone9);
-        thisStone.Color = (Game.Mana_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(Mana_Colors)).Length);
-
-        if (thisStone.Object.renderer.material != null)
-            thisStone.Object.renderer.material.color = Lookup_Colors[thisStone.Color.GetHashCode()];
-
-        thisStone.Object.transform.parent = incParent;
-        return thisStone;
     }
 
 

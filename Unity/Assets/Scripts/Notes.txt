@@ -11,15 +11,9 @@
 
 
 ** TO DO NEXT **
--) implement Minor__State.Player_Attack... it is switched into during Update() but the game_state machine ends there...
-... either implement it in Update() or just have it call an Attack() function to calculate the Mana_Buffer and go from there...
-
 1) have mana board show stones to represent mana amounts (also to represent health & xp)
 	each square can hold 4 small stones; then can turn all 4 into 1 big stone to equal "5"
 	... ditto for enemy health board.
-
-2) implement game logic re: dragging stone color accumulates mana of that color but other stone colors cost points to drag stone through & destroy...
-	then this game logic will show immediate results through mana board
 
 
 
