@@ -102,29 +102,26 @@ public class Game : MonoBehaviour {
         Drag_Damping = 1;
 
     public GameObject UI_Paused;
+    public Text UI_Player_Info, UI_Enemy_Info;
 
     void FixedUpdate() {
         Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
     }
     void Update() {
-
+        
         switch (State__Major) {
             default:
             case Game_States__Major.Initializing:
                 return;
 
             case Game_States__Major.Paused:
-                if (Input.GetKeyDown(KeyCode.Escape)) {
-                    State__Major = Game_States__Major.Running;
-                    UI_Paused.SetActive(false);
-                }
+                if (Input.GetKeyDown(KeyCode.Escape))
+                    Change_State(Game_States__Major.Running);
                 break;
 
             case Game_States__Major.Running: {
-                if (Input.GetKeyDown(KeyCode.Escape)) {
-                    State__Major = Game_States__Major.Paused;
-                    UI_Paused.SetActive(true);
-                }
+                if (Input.GetKeyDown(KeyCode.Escape))
+                    Change_State(Game_States__Major.Paused);
                 
                 /* Player input if it's the player's turn, to drag stones */
                 if (State__Minor == Game_States__Minor.Turn_Player__Idle) {
@@ -172,6 +169,7 @@ public class Game : MonoBehaviour {
         }   
     }
     void Change_State(Game_States__Minor incState) {
+        Game_States__Minor oldState = State__Minor;
         State__Minor = incState;
 
         if (incState == Game_States__Minor.Turn_Player__Attack) {
@@ -180,9 +178,42 @@ public class Game : MonoBehaviour {
             Change_State(Game_States__Minor.Turn_Player__Idle);
         }
     }
+    void Change_State(Game_States__Major incState) {
+        Game_States__Major oldState = State__Major;
+        State__Major = incState;
+
+        if (incState == Game_States__Major.Paused)
+            Pause();
+        else if (incState == Game_States__Major.Running && oldState == Game_States__Major.Paused)
+            Unpause();
+    }
     void Update_Stats(Player sender, EventArgs e) {
         Refresh__Mana_Boards();
     }
+    void Pause() {
+
+        UI_Player_Info.text = String.Format("<size=15>{0}</size>\n Level {1}\n\n Exp {2} / {3}\n Health {4} / {5}\n\n\n"
+            + "<size=11>Mana Pool\n {6} G : {7} B : {8} W\n {9} Y : {10} R\n\n\n"
+            + "Damage\n {11} G : {12} B : {13} W\n {14} Y : {15} R</size>",
+            Player_1.Character.Name, Player_1.Character.Level,
+            Player_1.Character.Experience, Player_1.Character.Experience_Max,
+            Player_1.Character.Health, Player_1.Character.Health_Max,
+            Player_1.Mana_Count[0], Player_1.Mana_Count[1], Player_1.Mana_Count[2], Player_1.Mana_Count[3], Player_1.Mana_Count[4],
+            Player_1.Character.Damage[0], Player_1.Character.Damage[1], Player_1.Character.Damage[2], Player_1.Character.Damage[3], Player_1.Character.Damage[4]
+            );
+
+        // FIX: CHECK FOR ENEMIES (1, 2, or 3?) and CHECK IF NULL before accessing... ... ...
+        UI_Enemy_Info.text = String.Format("<size=15>{0}</size>\n Level {1}\n\n Health {2} / {3}",
+            Enemy_1.Character.Name, Enemy_1.Character.Level,
+            Enemy_1.Character.Health, Enemy_1.Character.Health_Max
+            );
+
+        UI_Paused.SetActive(true);
+    }
+    void Unpause() {
+        UI_Paused.SetActive(false);
+    }
+
 
     Transform Drag_AttachJoint(Rigidbody body, Vector3 attachPoint) {
         GameObject obj = new GameObject("Attachment Point");

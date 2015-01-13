@@ -11,11 +11,6 @@
 
 
 ** TO DO NEXT **
-test & debug: 
-- implementation of damage multipliers (DONE)
-- character assignment to players (DONE)
-- level assignment to health changes (NOT DONE) and stat changes (DONE)
-
 ... animations?
 
 
