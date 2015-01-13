@@ -11,11 +11,12 @@
 
 
 ** TO DO NEXT **
-1) have mana board show stones to represent mana amounts (also to represent health & xp)
-	each square can hold 4 small stones; then can turn all 4 into 1 big stone to equal "5"
-	... ditto for enemy health board.
+test & debug: 
+- implementation of damage multipliers (DONE)
+- character assignment to players (DONE)
+- level assignment to health changes (NOT DONE) and stat changes (DONE)
 
-
+... animations?
 
 
 ** CODE **

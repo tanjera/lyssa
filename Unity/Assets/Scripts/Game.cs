@@ -66,18 +66,10 @@ public class Game : MonoBehaviour {
     }
 
     void Hack__Setup_Test_States() {
-        Player_1.Name = "Human";
-        Player_1.Health = 100;
-        Player_1.Health_Max = 100;
-        Player_1.Experience = 0;
-        Player_1.Experience_Max = 100;
-        Player_1.Damage = new int[5] { 1, 2, 3, 3, 1 };
+        Player_1.Character = Aska;
         Player_1.Target = Enemy_1;
 
-        Enemy_1.Name = "Enemy 1";
-        Enemy_1.Health = 100;
-        Enemy_1.Health_Max = 100;
-        Enemy_1.Damage = new int[5] { 1, 2, 3, 3, 1 };
+        Enemy_1.Character = Wooden_Dummy;
         Enemy_1.Target = Player_1;
     }
 
@@ -109,6 +101,7 @@ public class Game : MonoBehaviour {
         Drag_Force = 1000,
         Drag_Damping = 1;
 
+    public GameObject UI_Paused;
 
     void FixedUpdate() {
         Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
@@ -121,9 +114,17 @@ public class Game : MonoBehaviour {
                 return;
 
             case Game_States__Major.Paused:
+                if (Input.GetKeyDown(KeyCode.Escape)) {
+                    State__Major = Game_States__Major.Running;
+                    UI_Paused.SetActive(false);
+                }
                 break;
 
             case Game_States__Major.Running: {
+                if (Input.GetKeyDown(KeyCode.Escape)) {
+                    State__Major = Game_States__Major.Paused;
+                    UI_Paused.SetActive(true);
+                }
                 
                 /* Player input if it's the player's turn, to drag stones */
                 if (State__Minor == Game_States__Minor.Turn_Player__Idle) {
@@ -181,11 +182,6 @@ public class Game : MonoBehaviour {
     }
     void Update_Stats(Player sender, EventArgs e) {
         Refresh__Mana_Boards();
-
-        Debug.Log(String.Format("{0} {1}/{2} : {3} G  {4} B  {5} W  {6} Y  {7} R :: {8} {9} {10} {11} {12}",
-            sender.Name, sender.Health, sender.Health_Max,
-            sender.Mana_Count[0], sender.Mana_Count[1], sender.Mana_Count[2], sender.Mana_Count[3], sender.Mana_Count[4], 
-            sender.Mana_Buffer[0], sender.Mana_Buffer[1], sender.Mana_Buffer[2], sender.Mana_Buffer[3], sender.Mana_Buffer[4]));
     }
 
     Transform Drag_AttachJoint(Rigidbody body, Vector3 attachPoint) {
@@ -286,7 +282,7 @@ public class Game : MonoBehaviour {
 
     public static string Layer__Interactive = "Interactive";
 
-    public static int Mana_Color = 5;
+    public static int _Mana_Colors = 5;
     public static float Mana_Board__Multiplier = 2.5f;
 
     public enum Mana_Colors {
@@ -323,19 +319,97 @@ public class Game : MonoBehaviour {
 #region PLAYER
 
     public class Player {
-        public string Name;
-        public int[] Damage = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
 
+        public Player Target;
+        Characters _Character;
 
-        int _Health, _Health_Max,
-            _Experience, _Experience_Max;
         public int[] Mana_Count = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length],
                         Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
 
-        public Player Target;
-
         public delegate void Stats_Changed_Handler(Player sender, EventArgs e);
         public event Stats_Changed_Handler Stats_Changed;
+        void Pass__Stats_Changed(Characters sender, EventArgs e) { Stats_Changed(this, e); }
+
+        public Characters Character {
+            get { return _Character; }
+            set { 
+                _Character = value; 
+                _Character.Stats_Changed += new Characters.Stats_Changed_Handler(Pass__Stats_Changed);
+                Stats_Changed(this, new EventArgs());
+            }
+        }
+
+        public int Mana(int[] manaArray, Game.Mana_Colors Color) { return manaArray[(int)Color]; }
+        public void Add_Mana(int[] manaArray, Game.Mana_Colors Color, int Amount) { 
+            manaArray[(int)Color] += Amount;
+            Stats_Changed(this, new EventArgs());
+        }
+        public bool Use_Mana(int [] manaArray, Mana_Colors incColor, int Amount) {
+            if (manaArray[(int)incColor] < Amount)
+                return false;
+            manaArray[(int)incColor] -= Amount;
+
+            Stats_Changed(this, new EventArgs());
+            return true;
+        }
+
+        public void Attack(Player incTarget) {
+            double totalDamage = 0;
+            for (int i = 0; i < _Mana_Colors; i++)
+                totalDamage += Mana_Buffer[i] * Character.Damage[i];
+            totalDamage = (int)totalDamage;
+
+            incTarget.Character.Health = (int)(incTarget.Character.Health - totalDamage < 0 ? 0 : incTarget.Character.Health - totalDamage);
+            Mana_Buffer = new int[_Mana_Colors];
+            Stats_Changed(this, new EventArgs());
+        }
+    }
+
+    public class Characters {
+
+        public string Name;
+
+        public double Damage_per_Level;
+        public double[] Damage = new double[_Mana_Colors];
+
+        int _Health, _Health_Max, Health_per_Level,
+            _Level, _Experience, _Experience_Max;
+
+        public delegate void Stats_Changed_Handler(Characters sender, EventArgs e);
+        public event Stats_Changed_Handler Stats_Changed;
+
+        public Characters(string incName, int incHP_Base, int incHP_per_Lvl, double[] incDamage, double incDmg_per_Lvl, int incLvl = 1) {
+            Name = incName;
+            Level = incLvl;
+
+            Health_per_Level = incHP_per_Lvl;
+            _Health_Max = incHP_Base + (Level * Health_per_Level);
+            _Health = _Health_Max;
+
+            Damage_per_Level = incDmg_per_Lvl;
+            for (int i = 0; i < _Mana_Colors; i++)
+                Damage[i] = incDamage[i] * (Level * Damage_per_Level);
+        }
+
+        public int Level {
+            get { return _Level; }
+            set {
+                if (value < 1)
+                    return;
+
+                int lvlDiff = value - _Level;
+                _Level = value;
+
+                _Health_Max += lvlDiff * Health_per_Level;
+                _Health = _Health_Max;
+
+                for (int i = 0; i < _Mana_Colors; i++)
+                    Damage[i] = Damage[i] * (lvlDiff * Damage_per_Level);
+
+                if (Stats_Changed != null)
+                    Stats_Changed(this, new EventArgs()); 
+            }
+        }
 
         public int Health {
             get { return _Health; }
@@ -354,31 +428,14 @@ public class Game : MonoBehaviour {
             get { return _Experience_Max; }
             set { _Experience_Max = value; Stats_Changed(this, new EventArgs()); }
         }
-
-        public int Mana(int[] manaArray, Game.Mana_Colors Color) { return manaArray[(int)Color]; }
-        public void Add_Mana(int[] manaArray, Game.Mana_Colors Color, int Amount) { 
-            manaArray[(int)Color] += Amount;
-            Stats_Changed(this, new EventArgs());
-        }
-        public bool Use_Mana(int [] manaArray, Mana_Colors incColor, int Amount) {
-            if (manaArray[(int)incColor] < Amount)
-                return false;
-            manaArray[(int)incColor] -= Amount;
-
-            Stats_Changed(this, new EventArgs());
-            return true;
-        }
-
-        public void Attack(Player incTarget) {
-            int totalDamage = 0;
-            for (int i = 0; i < Enum.GetValues(typeof(Game.Mana_Colors)).Length; i++)
-                totalDamage += Mana_Buffer[i] * Damage[i];
-
-            incTarget.Health = incTarget.Health - totalDamage < 0 ? 0 : incTarget.Health - totalDamage;
-            Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
-            Stats_Changed(this, new EventArgs());
-        }
     }
+
+    static Characters
+        Aska = new Characters("Aska",
+            75, 25, new double[] { 0.1, 0.1, 1, 1, 0.1 }, 1.5),
+        Wooden_Dummy = new Characters("Wooden Dummy",
+            75, 25, new double[] { 0.1, 0.1, 1, 1, 0.1 }, 1.5);
+
 
 
 #endregion
@@ -471,7 +528,7 @@ public class Game : MonoBehaviour {
 
     public GameObject Prototype__Stone9,
                         Prototype__Stone9_Mini;
-    public GameObject[] Prototype__Particles = new GameObject[Mana_Color];
+    public GameObject[] Prototype__Particles = new GameObject[_Mana_Colors];
 
     Transform Item_Dragging;
 
@@ -566,15 +623,15 @@ public class Game : MonoBehaviour {
         cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.Experience.GetHashCode());
         cellCount = cellList.Count;
         for (int i = 0; i < cellCount; i++)
-            if (Player_1.Experience_Max > 0)
-                cellList[i].Active = Player_1.Experience_Max > 0 && cellList[i].Y < ((float)Player_1.Experience / (float)Player_1.Experience_Max) * cellCount;
+            if (Player_1.Character.Experience_Max > 0)
+                cellList[i].Active = Player_1.Character.Experience_Max > 0 && cellList[i].Y < ((float)Player_1.Character.Experience / (float)Player_1.Character.Experience_Max) * cellCount;
 
         // Update player's health bar by %
         cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.Health.GetHashCode());
         cellCount = cellList.Count;
         for (int i = 0; i < cellCount; i++)
-            if (Player_1.Health_Max > 0)
-                cellList[i].Active = Player_1.Health_Max > 0 && cellList[i].Y < ((float)Player_1.Health / (float)Player_1.Health_Max) * cellCount;
+            if (Player_1.Character.Health_Max > 0)
+                cellList[i].Active = Player_1.Character.Health_Max > 0 && cellList[i].Y < ((float)Player_1.Character.Health / (float)Player_1.Character.Health_Max) * cellCount;
 
         // Update the player's mana counts
         cellList = Mana_Board_Player.Cells.FindAll(cell => cell.X == Mana_Board.Green.GetHashCode());
@@ -598,20 +655,23 @@ public class Game : MonoBehaviour {
         if (has_Enemy_1) {
             cellCount = Mana_Board_Enemy_1.Cells.Count;
             for (int i = 0; i < cellCount; i++)
-                if (Enemy_1.Health_Max > 0)
-                    Mana_Board_Enemy_1.Cells[i].Active = Enemy_1.Health_Max > 0 && Mana_Board_Enemy_1.Cells[i].Y < ((float)Enemy_1.Health / (float)Enemy_1.Health_Max) * cellCount;
+                if (Enemy_1.Character != null && Enemy_1.Character.Health_Max > 0)
+                    Mana_Board_Enemy_1.Cells[i].Active = Enemy_1.Character.Health_Max > 0 
+                        && Mana_Board_Enemy_1.Cells[i].Y < ((float)Enemy_1.Character.Health / (float)Enemy_1.Character.Health_Max) * cellCount;
         }
         if (has_Enemy_2) {
             cellCount = Mana_Board_Enemy_2.Cells.Count;
             for (int i = 0; i < cellCount; i++)
-                if (Enemy_2.Health_Max > 0)
-                    Mana_Board_Enemy_2.Cells[i].Active = Enemy_2.Health_Max > 0 && Mana_Board_Enemy_2.Cells[i].Y < ((float)Enemy_2.Health / (float)Enemy_2.Health_Max) * cellCount;
+                if (Enemy_2.Character != null && Enemy_2.Character.Health_Max > 0)
+                    Mana_Board_Enemy_2.Cells[i].Active = Enemy_2.Character.Health_Max > 0 
+                        && Mana_Board_Enemy_2.Cells[i].Y < ((float)Enemy_2.Character.Health / (float)Enemy_2.Character.Health_Max) * cellCount;
         }
         if (has_Enemy_3) {
             cellCount = Mana_Board_Enemy_3.Cells.Count;
             for (int i = 0; i < cellCount; i++)
-                if (Enemy_3.Health_Max > 0)
-                    Mana_Board_Enemy_3.Cells[i].Active = Enemy_3.Health_Max > 0 && Mana_Board_Enemy_3.Cells[i].Y < ((float)Enemy_3.Health / (float)Enemy_3.Health_Max) * cellCount;
+                if (Enemy_3.Character != null && Enemy_3.Character.Health_Max > 0)
+                    Mana_Board_Enemy_3.Cells[i].Active = Enemy_3.Character.Health_Max > 0 
+                        && Mana_Board_Enemy_3.Cells[i].Y < ((float)Enemy_3.Character.Health / (float)Enemy_3.Character.Health_Max) * cellCount;
         }
     }
 
