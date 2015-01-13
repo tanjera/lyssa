@@ -7,6 +7,10 @@ using System.Collections.Generic;
 
 public class Game : MonoBehaviour {
 
+    bool consoleActive = false;
+    public GameObject consolePanel;
+    public Text consoleInput, consoleLog;
+
     public Player Player_1,
         Enemy_1, Enemy_2, Enemy_3;
 
@@ -15,7 +19,7 @@ public class Game : MonoBehaviour {
     void Start() {
         
         State__Major = Game_States__Major.Initializing;
-        
+
         Player_1 = new Player();
         Enemy_1 = new Player();
         Enemy_2 = new Player();
@@ -109,6 +113,14 @@ public class Game : MonoBehaviour {
     }
     void Update() {
         
+        /* Developer console functions */
+        if (Input.GetKeyDown(KeyCode.BackQuote))
+            Console_Toggle();
+        if (consoleActive)
+            Console_Process();
+
+
+        /* Main game routine */
         switch (State__Major) {
             default:
             case Game_States__Major.Initializing:
@@ -168,28 +180,7 @@ public class Game : MonoBehaviour {
             }
         }   
     }
-    void Change_State(Game_States__Minor incState) {
-        Game_States__Minor oldState = State__Minor;
-        State__Minor = incState;
 
-        if (incState == Game_States__Minor.Turn_Player__Attack) {
-            /* HACK: should check active players, iterate each one, give computer turn for gathering mana, etc */
-            Player_1.Attack(Player_1.Target);
-            Change_State(Game_States__Minor.Turn_Player__Idle);
-        }
-    }
-    void Change_State(Game_States__Major incState) {
-        Game_States__Major oldState = State__Major;
-        State__Major = incState;
-
-        if (incState == Game_States__Major.Paused)
-            Pause();
-        else if (incState == Game_States__Major.Running && oldState == Game_States__Major.Paused)
-            Unpause();
-    }
-    void Update_Stats(Player sender, EventArgs e) {
-        Refresh__Mana_Boards();
-    }
     void Pause() {
 
         UI_Player_Info.text = String.Format("<size=15>{0}</size>\n Level {1}\n\n Exp {2} / {3}\n Health {4} / {5}\n\n\n"
@@ -214,6 +205,72 @@ public class Game : MonoBehaviour {
         UI_Paused.SetActive(false);
     }
 
+    void Console_Toggle() {
+        consoleActive = !consoleActive;
+        consolePanel.SetActive(consoleActive);
+    }
+    void Console_Process() {
+        foreach (char c in Input.inputString) {
+            switch (c) {
+                case '`': 
+                    return;
+                    
+                case '\n':
+                case '\r':
+                    Console_Parse(consoleInput.text);
+                    consoleLog.text = string.Concat("> ", consoleInput.text, "\n", consoleLog.text);
+                    consoleInput.text = "";
+                    break;
+
+                case '\b':
+                    if (consoleInput.text.Length > 0)
+                        consoleInput.text = consoleInput.text.Remove(consoleInput.text.Length - 1);
+                    break;
+
+                default:
+                    consoleInput.text += c;
+                    break;
+            }
+        }
+    }
+    void Console_Parse(string incCommand) {
+        incCommand = incCommand.ToLower();
+        switch (incCommand) { // For one worded commands (e.g. help, version, quit, etc)
+            default:
+                break;
+
+            case "version":
+                Console_Output("What version is this? ... uh... alpha.");
+                return;
+        }
+    }
+    void Console_Output(string incOutput) {
+        consoleLog.text = string.Concat(incOutput, "\n", consoleLog.text);
+    }
+    
+    void Change_State(Game_States__Minor incState) {
+        Game_States__Minor oldState = State__Minor;
+        State__Minor = incState;
+
+        if (incState == Game_States__Minor.Turn_Player__Attack) {
+            /* HACK: should check active players, iterate each one, give computer turn for gathering mana, etc */
+            Player_1.Attack(Player_1.Target);
+            Change_State(Game_States__Minor.Turn_Player__Idle);
+        }
+    }
+    void Change_State(Game_States__Major incState) {
+        Game_States__Major oldState = State__Major;
+        State__Major = incState;
+
+        if (incState == Game_States__Major.Paused)
+            Pause();
+        else if (incState == Game_States__Major.Running && oldState == Game_States__Major.Paused)
+            Unpause();
+    }
+    
+    void Update_Stats(Player sender, EventArgs e) {
+        Refresh__Mana_Boards();
+    }
 
     Transform Drag_AttachJoint(Rigidbody body, Vector3 attachPoint) {
         GameObject obj = new GameObject("Attachment Point");

@@ -12,10 +12,10 @@
 
 ** TO DO NEXT **
 ... animations?
+... ui console?
 
 
 ** CODE **
-- move CameraPlane somewhere better integrated...
 
 
 
