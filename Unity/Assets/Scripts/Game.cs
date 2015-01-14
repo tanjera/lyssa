@@ -20,15 +20,20 @@ public class Game : MonoBehaviour {
         
         State__Major = Game_States__Major.Initializing;
 
-        Player_1 = new Player();
-        Enemy_1 = new Player();
-        Enemy_2 = new Player();
-        Enemy_3 = new Player();
+        Player_1 = new Player(Player.Types.Human);
+        Enemy_1 = new Player(Player.Types.Computer);
+        Enemy_2 = new Player(Player.Types.Computer);
+        Enemy_3 = new Player(Player.Types.Computer);
 
         Player_1.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
         Enemy_1.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
         Enemy_2.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
         Enemy_3.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
+
+        Player_1.Console_Output += new Player.Console_Output_Handler(Console_Output);
+        Enemy_1.Console_Output += new Player.Console_Output_Handler(Console_Output);
+        Enemy_2.Console_Output += new Player.Console_Output_Handler(Console_Output);
+        Enemy_3.Console_Output += new Player.Console_Output_Handler(Console_Output);
 
         // Construct the playing board
         Playing_Board__Container = GameObject.Find("Playing_Board__Item_Container").transform;
@@ -218,7 +223,7 @@ public class Game : MonoBehaviour {
                 case '\n':
                 case '\r':
                     Console_Parse(consoleInput.text);
-                    consoleLog.text = string.Concat("> ", consoleInput.text, "\n", consoleLog.text);
+                    Console_Output(string.Concat("> ", consoleInput.text));
                     consoleInput.text = "";
                     break;
 
@@ -242,10 +247,19 @@ public class Game : MonoBehaviour {
             case "version":
                 Console_Output("What version is this? ... uh... alpha.");
                 return;
+
+            case "clear":
+                consoleLog.text = "";
+                return;
         }
     }
     void Console_Output(string incOutput) {
-        consoleLog.text = string.Concat(incOutput, "\n", consoleLog.text);
+        consoleLog.text = string.Concat(consoleLog.text, "\n", incOutput);
+        // Scroll the console down...
+        if (consoleLog.preferredHeight > consoleLog.rectTransform.rect.height) {
+            consoleLog.text = consoleLog.text.Trim('\n', ' ');
+            consoleLog.text = consoleLog.text.Substring(consoleLog.text.IndexOf('\n'));
+        }
     }
     
     void Change_State(Game_States__Minor incState) {
@@ -253,8 +267,41 @@ public class Game : MonoBehaviour {
         State__Minor = incState;
 
         if (incState == Game_States__Minor.Turn_Player__Attack) {
-            /* HACK: should check active players, iterate each one, give computer turn for gathering mana, etc */
             Player_1.Attack(Player_1.Target);
+
+            if (has_Enemy_1)
+                Change_State(Game_States__Minor.Turn_Enemy1);
+            else if (has_Enemy_2)
+                Change_State(Game_States__Minor.Turn_Enemy2);
+            else if (has_Enemy_3)
+                Change_State(Game_States__Minor.Turn_Enemy3);
+            else
+                Change_State(Game_States__Minor.Turn_Player__Idle);
+        }
+
+        else if (incState == Game_States__Minor.Turn_Enemy1) {
+            Enemy_1.Attack(Enemy_1.Target);
+
+            if (has_Enemy_2)
+                Change_State(Game_States__Minor.Turn_Enemy2);
+            else if (has_Enemy_3)
+                Change_State(Game_States__Minor.Turn_Enemy3);
+            else
+                Change_State(Game_States__Minor.Turn_Player__Idle);
+        }
+
+        else if (incState == Game_States__Minor.Turn_Enemy2) {
+            Enemy_2.Attack(Enemy_2.Target);
+
+            if (has_Enemy_3)
+                Change_State(Game_States__Minor.Turn_Enemy3);
+            else
+                Change_State(Game_States__Minor.Turn_Player__Idle);
+        }
+
+        else if (incState == Game_States__Minor.Turn_Enemy3) {
+            Enemy_3.Attack(Enemy_3.Target);
+
             Change_State(Game_States__Minor.Turn_Player__Idle);
         }
     }
@@ -408,16 +455,27 @@ public class Game : MonoBehaviour {
 
     public class Player {
 
+        public enum Types {
+            Human,
+            Computer
+        }
+
         public Player Target;
         Characters _Character;
+        Types _Type;
 
         public int[] Mana_Count = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length],
                         Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
 
+        public delegate void Console_Output_Handler(string consoleOutput);
+        public event Console_Output_Handler Console_Output;
         public delegate void Stats_Changed_Handler(Player sender, EventArgs e);
         public event Stats_Changed_Handler Stats_Changed;
         void Pass__Stats_Changed(Characters sender, EventArgs e) { Stats_Changed(this, e); }
 
+        public Player(Types incType) {
+            _Type = incType;
+        }
         public Characters Character {
             get { return _Character; }
             set { 
@@ -442,12 +500,34 @@ public class Game : MonoBehaviour {
         }
 
         public void Attack(Player incTarget) {
+            bool willHit = true;
             double totalDamage = 0;
-            for (int i = 0; i < _Mana_Colors; i++)
-                totalDamage += Mana_Buffer[i] * Character.Damage[i];
-            totalDamage = (int)totalDamage;
+     
+            if (_Type == Types.Human) {
+                for (int i = 0; i < _Mana_Colors; i++)
+                    totalDamage += Mana_Buffer[i] * Character.Damage[i];
+                totalDamage = (int)totalDamage;
+            }
+            else if (_Type == Types.Computer) {
+                willHit = UnityEngine.Random.Range(0f, 1f) < (float)Character.Hit_Chance;
+                for (int i = 0; i < _Mana_Colors; i++)
+                    totalDamage += Character.Damage[i];
+                totalDamage *= UnityEngine.Random.Range(0.25f, 2.0f);
+                totalDamage = (int)totalDamage;
+            }
+            
+            if (Console_Output != null) {
+                if (willHit)
+                    Console_Output(String.Format("{0} attacked {1} for {2} damage!!", Character.Name, incTarget.Character.Name, totalDamage));
+                else
+                    Console_Output(String.Format("{0}'s attack missed {1}!", Character.Name, incTarget.Character.Name));
+            }
+            if (willHit)
+                incTarget.Character.Health = (int)(incTarget.Character.Health - totalDamage < 0 ? 0 : incTarget.Character.Health - totalDamage);
 
-            incTarget.Character.Health = (int)(incTarget.Character.Health - totalDamage < 0 ? 0 : incTarget.Character.Health - totalDamage);
+            if (incTarget.Character.Health == 0)
+                Console_Output(String.Format("*** {0} defeated {1}!!! ***", Character.Name, incTarget.Character.Name));
+
             Mana_Buffer = new int[_Mana_Colors];
             Stats_Changed(this, new EventArgs());
         }
@@ -457,7 +537,7 @@ public class Game : MonoBehaviour {
 
         public string Name;
 
-        public double Damage_per_Level;
+        public double Damage_per_Level, Hit_Chance;
         public double[] Damage = new double[_Mana_Colors];
 
         int _Health, _Health_Max, Health_per_Level,
@@ -466,7 +546,7 @@ public class Game : MonoBehaviour {
         public delegate void Stats_Changed_Handler(Characters sender, EventArgs e);
         public event Stats_Changed_Handler Stats_Changed;
 
-        public Characters(string incName, int incHP_Base, int incHP_per_Lvl, double[] incDamage, double incDmg_per_Lvl, int incLvl = 1) {
+        public Characters(string incName, int incHP_Base, int incHP_per_Lvl, double[] incDamage, double incDmg_per_Lvl, double incHit_Chance = 0.9, int incLvl = 1) {
             Name = incName;
             Level = incLvl;
 
@@ -474,6 +554,7 @@ public class Game : MonoBehaviour {
             _Health_Max = incHP_Base + (Level * Health_per_Level);
             _Health = _Health_Max;
 
+            Hit_Chance = incHit_Chance;
             Damage_per_Level = incDmg_per_Lvl;
             for (int i = 0; i < _Mana_Colors; i++)
                 Damage[i] = incDamage[i] * (Level * Damage_per_Level);
