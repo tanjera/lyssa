@@ -7,10 +7,30 @@ ModelImporter:
     100002: Shield
     100004: Sword
     100006: //RootNode
+    100008: arm1_l
+    100010: arm1_r
+    100012: arm2_l
+    100014: arm2_r
+    100016: Armature
+    100018: spine1
+    100020: spine2
+    100022: spine3
+    100024: spine4
+    100026: Wooden_Dummy
     400000: Cross
     400002: Shield
     400004: Sword
     400006: //RootNode
+    400008: arm1_l
+    400010: arm1_r
+    400012: arm2_l
+    400014: arm2_r
+    400016: Armature
+    400018: spine1
+    400020: spine2
+    400022: spine3
+    400024: spine4
+    400026: Wooden_Dummy
     2300000: Cross
     2300002: Shield
     2300004: Sword
@@ -23,8 +43,10 @@ ModelImporter:
     4300002: Shield
     4300004: Sword
     4300006: Cross
+    4300008: Wooden_Dummy
     7400000: Default Take
     9500000: //RootNode
+    13700000: Wooden_Dummy
   materials:
     importMaterials: 1
     materialName: 0
