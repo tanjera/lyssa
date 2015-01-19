@@ -75,7 +75,7 @@ public class Game : MonoBehaviour {
     }
 
     void Hack__Setup_Test_States() {
-        Player_1.Character = Aska;
+        Player_1.Character = Epio;
         Player_1.Target = Enemy_1;
 
         Enemy_1.Model = GameObject.Find("Wooden Dummy");
@@ -113,7 +113,8 @@ public class Game : MonoBehaviour {
         Drag_Damping = 1;
 
     public GameObject UI_Paused;
-    public Text UI_Player_Info, UI_Enemy_Info;
+    public Text UI_Player_Info, UI_Enemy_Info,
+        UI_Player_Info__Short, UI_Enemy_Info__Short;
 
     void FixedUpdate() {
         Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
@@ -321,9 +322,22 @@ public class Game : MonoBehaviour {
         }
     }
 
-    
     void Update_Stats(Player sender, EventArgs e) {
         Refresh__Mana_Boards();
+
+        if (UI_Player_Info__Short != null && Player_1.Character != null)
+            UI_Player_Info__Short.text = String.Format("{0}\n Level {1}\n\n Exp {2} / {3}\n Health {4} / {5}",
+                Player_1.Character.Name, Player_1.Character.Level,
+                Player_1.Character.Experience, Player_1.Character.Experience_Max,
+                Player_1.Character.Health, Player_1.Character.Health_Max
+                );
+
+        // FIX: CHECK FOR ENEMIES (1, 2, or 3?) and CHECK IF NULL before accessing... ... ...
+        if (UI_Enemy_Info__Short != null && Enemy_1.Character != null)
+            UI_Enemy_Info__Short.text = String.Format("{0}\n Level {1}\n\n Health {2} / {3}",
+                Enemy_1.Character.Name, Enemy_1.Character.Level,
+                Enemy_1.Character.Health, Enemy_1.Character.Health_Max
+                );
     }
 
     Transform Drag_AttachJoint(Rigidbody body, Vector3 attachPoint) {
@@ -619,7 +633,7 @@ public class Game : MonoBehaviour {
     }
 
     static Characters
-        Aska = new Characters("Aska",
+        Epio = new Characters("Epio",
             75, 25, new double[] { 0.1, 0.1, 1, 1, 0.1 }, 1.5),
         Wooden_Dummy = new Characters("Wooden Dummy",
             75, 25, new double[] { 0.1, 0.1, 1, 1, 0.1 }, 1.5);
@@ -881,15 +895,20 @@ public class Game : MonoBehaviour {
     }
     void Destroy_Item(Items incItem) {
         if (State__Minor == Game_States__Minor.Turn_Player__Dragging) {
-            // Add to the mana buffer (for calculating this turn's attack damage, etc)
-            Player_1.Add_Mana(Player_1.Mana_Buffer, incItem.Color, 1);
-            
-            // If we're hitting the same color we're dragging, add it to the mana pool
-            if (Drag_Color == incItem.Color)
+            // If we're hitting the same color we're dragging, add it to the mana buffer
+            if (Drag_Color == incItem.Color) {
+                Player_1.Add_Mana(Player_1.Mana_Buffer, incItem.Color, 1);
                 Player_1.Add_Mana(Player_1.Mana_Count, incItem.Color, 1);
-            else { // Otherwise... subtract it from *that* color's mana pool... otherwise subtract from *this* color's mana pool
-                if (!Player_1.Use_Mana(Player_1.Mana_Count, incItem.Color, 1))
+            }
+            else { // Otherwise... subtract it from *that* color's mana buffer... otherwise subtract from *this* color's mana buffer
+                if (Player_1.Use_Mana(Player_1.Mana_Count, incItem.Color, 1)) {
+                    Player_1.Use_Mana(Player_1.Mana_Buffer, incItem.Color, 1);
+                }
+                else {
                     Player_1.Use_Mana(Player_1.Mana_Count, Drag_Color, 1);
+                    Player_1.Use_Mana(Player_1.Mana_Buffer, Drag_Color, 1);
+                    
+                }
             }
         }
 

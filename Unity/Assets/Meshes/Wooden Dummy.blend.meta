@@ -1,61 +1,43 @@
 fileFormatVersion: 2
-guid: 1f8a4be45649c9948afc8623ca584873
+guid: af2b2799f74acb34cbd3ee6e094f1f84
 ModelImporter:
   serializedVersion: 16
   fileIDToRecycleName:
-    100000: Cross
-    100002: Shield
-    100004: Sword
-    100006: //RootNode
-    100008: arm1_l
-    100010: arm1_r
-    100012: arm2_l
-    100014: arm2_r
-    100016: Armature
+    100000: arm1_l
+    100002: arm1_r
+    100004: arm2_l
+    100006: arm2_r
+    100008: arm3_l
+    100010: arm3_r
+    100012: Armature
+    100014: //RootNode
+    100016: shield
     100018: spine1
     100020: spine2
     100022: spine3
     100024: spine4
-    100026: Wooden_Dummy
-    100028: arm3_l
-    100030: arm3_r
-    100032: shield
-    100034: sword
-    400000: Cross
-    400002: Shield
-    400004: Sword
-    400006: //RootNode
-    400008: arm1_l
-    400010: arm1_r
-    400012: arm2_l
-    400014: arm2_r
-    400016: Armature
+    100026: sword
+    100028: Wooden_Dummy
+    400000: arm1_l
+    400002: arm1_r
+    400004: arm2_l
+    400006: arm2_r
+    400008: arm3_l
+    400010: arm3_r
+    400012: Armature
+    400014: //RootNode
+    400016: shield
     400018: spine1
     400020: spine2
     400022: spine3
     400024: spine4
-    400026: Wooden_Dummy
-    400028: arm3_l
-    400030: arm3_r
-    400032: shield
-    400034: sword
-    2300000: Cross
-    2300002: Shield
-    2300004: Sword
-    2300006: //RootNode
-    3300000: Cross
-    3300002: Shield
-    3300004: Sword
-    3300006: //RootNode
-    4300000: Base
-    4300002: Shield
-    4300004: Sword
-    4300006: Cross
-    4300008: Wooden_Dummy
+    400026: sword
+    400028: Wooden_Dummy
+    4300000: Wooden_Dummy
     7400000: Default Take
-    7400002: shield_swing
-    7400004: sword_swing
-    7400006: idle_1
+    7400002: idle_1
+    7400004: shield_swing
+    7400006: sword_swing
     9500000: //RootNode
     13700000: Wooden_Dummy
   materials:
