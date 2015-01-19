@@ -11,13 +11,15 @@
 
 
 ** TO DO NEXT **
-1) finish rigging Aska in unity (completed in Blender!)
+1) create player gameobject origins (empty gameObject transforms), so that on Start(), manually Instantiate()
+	the character's gameObject (Player 1 has Aska Instantiate() on Player_1__Location, etc)
+	... this way the gameObject is dynamically coded based on lookup tables in Game.cs, so that animations, etc
+	are already linked together in the code (no need for hard coding)
 
+2) trigger animations based on game logic...
 
-- complete turn-based attack routine (enemy attack player!)
-- output attack damage amounts to console
-- trigger animations based on game logic...
-- make 3d paper doll dressing room for equipment!
+... animate aska
+... make 3d paper doll dressing room for equipment?
 
 
 

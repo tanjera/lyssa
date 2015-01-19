@@ -78,6 +78,8 @@ public class Game : MonoBehaviour {
         Player_1.Character = Aska;
         Player_1.Target = Enemy_1;
 
+        Enemy_1.Model = GameObject.Find("Wooden Dummy");
+        Enemy_1._Animator = Enemy_1.Model.GetComponent<Animator>();
         Enemy_1.Character = Wooden_Dummy;
         Enemy_1.Target = Player_1;
     }
@@ -460,9 +462,12 @@ public class Game : MonoBehaviour {
             Computer
         }
 
-        public Player Target;
-        Characters _Character;
         Types _Type;
+        Characters _Character;
+        public GameObject Model;
+        public Animator _Animator;
+        public Player Target;
+
 
         public int[] Mana_Count = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length],
                         Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
@@ -503,6 +508,7 @@ public class Game : MonoBehaviour {
             bool willHit = true;
             double totalDamage = 0;
      
+            // Calculate damages
             if (_Type == Types.Human) {
                 for (int i = 0; i < _Mana_Colors; i++)
                     totalDamage += Mana_Buffer[i] * Character.Damage[i];
@@ -516,6 +522,7 @@ public class Game : MonoBehaviour {
                 totalDamage = (int)totalDamage;
             }
             
+            // Output information to console
             if (Console_Output != null) {
                 if (willHit)
                     Console_Output(String.Format("{0} attacked {1} for {2} damage!!", Character.Name, incTarget.Character.Name, totalDamage));
@@ -528,6 +535,13 @@ public class Game : MonoBehaviour {
             if (incTarget.Character.Health == 0)
                 Console_Output(String.Format("*** {0} defeated {1}!!! ***", Character.Name, incTarget.Character.Name));
 
+            // Animate models
+            if (_Animator != null)
+                _Animator.Play("Attack_1");
+            if (Target._Animator != null)
+                Target._Animator.Play("Defend_1");
+
+            // Routine stuff
             Mana_Buffer = new int[_Mana_Colors];
             Stats_Changed(this, new EventArgs());
         }
