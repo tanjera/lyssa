@@ -102,7 +102,7 @@ public class Game : MonoBehaviour {
         Turn_Enemy3
     }
 
-    Game_States__Major State__Major;      
+    Game_States__Major State__Major;
     Game_States__Minor State__Minor;
 
     Items Drag_Item;
@@ -188,6 +188,63 @@ public class Game : MonoBehaviour {
         }   
     }
 
+    void Change_State(Game_States__Minor incState) {
+        Game_States__Minor oldState = State__Minor;
+        State__Minor = incState;
+
+        switch (incState) {
+            default: break;
+
+            case Game_States__Minor.Turn_Player__Attack:
+                if (Player_1 != null) {
+                    Player_1.Attack(Player_1.Target);
+                    Change_State(Game_States__Minor.Turn_Enemy1, 2);
+                }
+                else Change_State(Game_States__Minor.Turn_Enemy1);
+                break;
+
+            case Game_States__Minor.Turn_Enemy1:
+                if (has_Enemy_1) {
+                    Enemy_1.Attack(Enemy_1.Target);
+                    Change_State(Game_States__Minor.Turn_Enemy2, 2);
+                } 
+                else Change_State(Game_States__Minor.Turn_Enemy2);
+                break;
+
+            case Game_States__Minor.Turn_Enemy2:
+                if (has_Enemy_2) {
+                    Enemy_2.Attack(Enemy_2.Target);
+                    Change_State(Game_States__Minor.Turn_Enemy3, 2);
+                }
+                else Change_State(Game_States__Minor.Turn_Enemy3);
+                break;
+
+            case Game_States__Minor.Turn_Enemy3:
+                if (has_Enemy_3) {
+                    Enemy_3.Attack(Enemy_3.Target);
+                    Change_State(Game_States__Minor.Turn_Player__Idle, 2);
+                } 
+                else Change_State(Game_States__Minor.Turn_Player__Idle);
+                break;
+        }
+    }
+    void Change_State(Game_States__Major incState) {
+        Game_States__Major oldState = State__Major;
+        State__Major = incState;
+
+        if (incState == Game_States__Major.Paused)
+            Pause();
+        else if (incState == Game_States__Major.Running && oldState == Game_States__Major.Paused)
+            Unpause();
+    }
+    void Change_State(Game_States__Minor incState, float waitTime) {
+        StartCoroutine(Change_State__Delay(incState, waitTime));
+    }
+    IEnumerator Change_State__Delay(Game_States__Minor incState, float waitTime) {
+        yield return new WaitForSeconds(waitTime);
+        Change_State(incState);
+    }
+
     void Pause() {
 
         UI_Player_Info.text = String.Format("<size=15>{0}</size>\n Level {1}\n\n Exp {2} / {3}\n Health {4} / {5}\n\n\n"
@@ -219,9 +276,9 @@ public class Game : MonoBehaviour {
     void Console_Process() {
         foreach (char c in Input.inputString) {
             switch (c) {
-                case '`': 
+                case '`':
                     return;
-                    
+
                 case '\n':
                 case '\r':
                     Console_Parse(consoleInput.text);
@@ -263,59 +320,7 @@ public class Game : MonoBehaviour {
             consoleLog.text = consoleLog.text.Substring(consoleLog.text.IndexOf('\n'));
         }
     }
-    
-    void Change_State(Game_States__Minor incState) {
-        Game_States__Minor oldState = State__Minor;
-        State__Minor = incState;
 
-        if (incState == Game_States__Minor.Turn_Player__Attack) {
-            Player_1.Attack(Player_1.Target);
-
-            if (has_Enemy_1)
-                Change_State(Game_States__Minor.Turn_Enemy1);
-            else if (has_Enemy_2)
-                Change_State(Game_States__Minor.Turn_Enemy2);
-            else if (has_Enemy_3)
-                Change_State(Game_States__Minor.Turn_Enemy3);
-            else
-                Change_State(Game_States__Minor.Turn_Player__Idle);
-        }
-
-        else if (incState == Game_States__Minor.Turn_Enemy1) {
-            Enemy_1.Attack(Enemy_1.Target);
-
-            if (has_Enemy_2)
-                Change_State(Game_States__Minor.Turn_Enemy2);
-            else if (has_Enemy_3)
-                Change_State(Game_States__Minor.Turn_Enemy3);
-            else
-                Change_State(Game_States__Minor.Turn_Player__Idle);
-        }
-
-        else if (incState == Game_States__Minor.Turn_Enemy2) {
-            Enemy_2.Attack(Enemy_2.Target);
-
-            if (has_Enemy_3)
-                Change_State(Game_States__Minor.Turn_Enemy3);
-            else
-                Change_State(Game_States__Minor.Turn_Player__Idle);
-        }
-
-        else if (incState == Game_States__Minor.Turn_Enemy3) {
-            Enemy_3.Attack(Enemy_3.Target);
-
-            Change_State(Game_States__Minor.Turn_Player__Idle);
-        }
-    }
-    void Change_State(Game_States__Major incState) {
-        Game_States__Major oldState = State__Major;
-        State__Major = incState;
-
-        if (incState == Game_States__Major.Paused)
-            Pause();
-        else if (incState == Game_States__Major.Running && oldState == Game_States__Major.Paused)
-            Unpause();
-    }
     
     void Update_Stats(Player sender, EventArgs e) {
         Refresh__Mana_Boards();
