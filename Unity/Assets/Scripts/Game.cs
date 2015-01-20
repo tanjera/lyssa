@@ -117,6 +117,7 @@ public class Game : MonoBehaviour {
         UI_Player_Info__Short, UI_Enemy_Info__Short,
         Combat_Log;
 
+
     void FixedUpdate() {
         Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
     }
@@ -151,15 +152,16 @@ public class Game : MonoBehaviour {
                         RaycastHit hit;
                         if (Physics.Raycast(ray, out hit)) {
                             if (hit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Interactive)) {
+                                if (hit.transform.name == "Stone_9__Playing_Board") {
+                                    Drag_Item = Playing_Board.Cells.Find(obj => obj.Item.Transform == hit.transform).Item;
+                                    Drag_Color = Drag_Item.Color;   // Last color dragged, never cleared, only reassigned for reference.
+                                    Release_Item(Drag_Item);
 
-                                Drag_Item = Playing_Board.Cells.Find(obj => obj.Item.Transform == hit.transform).Item;
-                                Drag_Color = Drag_Item.Color;   // Last color dragged, never cleared, only reassigned for reference.
-                                Release_Item(Drag_Item);
-
-                                Drag_Depth = Camera.main.transform.InverseTransformPoint(hit.point).z;
-                                Drag_Joint = Drag_AttachJoint(hit.rigidbody, hit.point);
-                                Scale(hit.transform, hit.transform.localScale * 0.7f, 0.1f);
-                                Change_State(Game_States__Minor.Turn_Player__Dragging);
+                                    Drag_Depth = Camera.main.transform.InverseTransformPoint(hit.point).z;
+                                    Drag_Joint = Drag_AttachJoint(hit.rigidbody, hit.point);
+                                    Scale(hit.transform, hit.transform.localScale * 0.7f, 0.1f);
+                                    Change_State(Game_States__Minor.Turn_Player__Dragging);
+                                }
                             }
                         }
                     }
@@ -195,7 +197,7 @@ public class Game : MonoBehaviour {
         State__Minor = incState;
 
         switch (incState) {
-            default: break;
+            default: return;
 
             case Game_States__Minor.Turn_Player__Attack:
                 if (Player_1 != null) {
@@ -203,7 +205,7 @@ public class Game : MonoBehaviour {
                     Change_State(Game_States__Minor.Turn_Enemy1, 2);
                 }
                 else Change_State(Game_States__Minor.Turn_Enemy1);
-                break;
+                return;
 
             case Game_States__Minor.Turn_Enemy1:
                 if (has_Enemy_1) {
@@ -211,7 +213,7 @@ public class Game : MonoBehaviour {
                     Change_State(Game_States__Minor.Turn_Enemy2, 2);
                 } 
                 else Change_State(Game_States__Minor.Turn_Enemy2);
-                break;
+                return;
 
             case Game_States__Minor.Turn_Enemy2:
                 if (has_Enemy_2) {
@@ -219,7 +221,7 @@ public class Game : MonoBehaviour {
                     Change_State(Game_States__Minor.Turn_Enemy3, 2);
                 }
                 else Change_State(Game_States__Minor.Turn_Enemy3);
-                break;
+                return;
 
             case Game_States__Minor.Turn_Enemy3:
                 if (has_Enemy_3) {
@@ -227,7 +229,7 @@ public class Game : MonoBehaviour {
                     Change_State(Game_States__Minor.Turn_Player__Idle, 2);
                 } 
                 else Change_State(Game_States__Minor.Turn_Player__Idle);
-                break;
+                return;
         }
     }
     void Change_State(Game_States__Major incState) {
@@ -628,7 +630,6 @@ public class Game : MonoBehaviour {
             Stats_Changed();
         }
     }
-
     public class Characters {
 
         public string Name;
@@ -639,12 +640,15 @@ public class Game : MonoBehaviour {
         int _Health, _Health_Max, Health_per_Level,
             _Level, _Experience, _Experience_Max;
 
+        public List<Skill> Skills = new List<Skill>();
+
         public delegate void Stats_Changed_Handler(Characters sender, EventArgs e);
         public event Stats_Changed_Handler Stats_Changed;
 
-        public Characters(string incName, int incHP_Base, int incHP_per_Lvl, double[] incDamage, double incDmg_per_Lvl, double incHit_Chance = 0.9, int incLvl = 1) {
+        public Characters(string incName, int incHP_Base, int incHP_per_Lvl, double[] incDamage, double incDmg_per_Lvl, List<Skill> incSkills, double incHit_Chance = 0.9, int incLvl = 1) {
             Name = incName;
             Level = incLvl;
+            Skills = incSkills;
 
             Health_per_Level = incHP_per_Lvl;
             _Health_Max = incHP_Base + (Level * Health_per_Level);
@@ -694,13 +698,41 @@ public class Game : MonoBehaviour {
             set { _Experience_Max = value; Stats_Changed(this, new EventArgs()); }
         }
     }
+    public class Skill {
+
+        public delegate void _Action(Player incPlayer, Player incTarget);
+
+        public string Name, Description;
+        public int[] Mana;
+        _Action Action;
+
+        public Skill(string incName, string incDescription, int[] incMana, _Action incAction) {
+            Name = incName;
+            Description = incDescription;
+            Mana = incMana;
+            Action = incAction;
+        }
+    }
 
     static Characters
         Epio = new Characters("Epio",
-            75, 25, new double[] { 0.1, 0.1, 1, 1, 0.1 }, 1.5),
-        Wooden_Dummy = new Characters("Wooden Dummy",
-            75, 25, new double[] { 0.1, 0.1, 1, 1, 0.1 }, 1.5);
+            75, 25, new double[] { 0.1, 0.1, 1, 1, 0.1 }, 1.5,
+            new List<Skill>() { 
+                new Skill("Soothe", "It heals...", new int[] { 0, 0, 10, 0, 0 },
+	                delegate (Player incPlayer, Player incTarget) {
+		                incPlayer.Character.Health += incPlayer.Character.Health_Max * incPlayer.Mana_Count[Mana_Colors.White.GetHashCode()] / 50;
+		                if (incPlayer.Character.Health > incPlayer.Character.Health_Max)
+			                incPlayer.Character.Health = incPlayer.Character.Health_Max;
+		                }),
+		        new Skill("Wither", "It hurts...", new int[] { 0, 0, 0, 10, 0 },
+	                delegate (Player incPlayer, Player incTarget) {
+		                incTarget.Character.Health -= incPlayer.Character.Health_Max * incPlayer.Mana_Count[Mana_Colors.Yellow.GetHashCode()] / 50;
+		                })
+            } ),
 
+        Wooden_Dummy = new Characters("Wooden Dummy",
+            75, 25, new double[] { 0.1, 0.1, 1, 1, 0.1 }, 1.5,
+            new List<Skill>() {} );
 
 
 #endregion
@@ -816,6 +848,7 @@ public class Game : MonoBehaviour {
             obj.Item = Create_Item(obj, Items.Types.Stone, Prototype__Stone9,
                 (Mana_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(Mana_Colors)).Length),
                 Playing_Board__Container, true, true);
+            obj.Item.Object.name = "Stone_9__Playing_Board";
         });
     }
     void Refresh__Playing_Board() {

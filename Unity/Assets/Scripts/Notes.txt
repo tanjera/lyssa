@@ -17,8 +17,14 @@
 	... will need to standardize origins on character meshes
 
 2) include basic default animations in lookup table along with GameObjects...
-3) *create UI for special powers & attacks!*
+
+3) **create UI for special powers & attacks!**
+	... just create badge stones and place above Epio's head... no need for a full UI... click the badges to trigger
 4) create backend for the special powers as well... ... ...
+	... mostly done, just need to run the actual delegate Action() and
+		1) funnel skills through triggering function to standardize Console_Output()
+		2) add modifiers to guide heal/damage values, enable some Random.Range functionality
+		3) pass Action an int totalDamage instead of doing the damage within the Action itself?
 
 7) add backend for character to wear equipment (top, pants, weapon, rings, etc)
 8) create character selection UI with 3D preview
