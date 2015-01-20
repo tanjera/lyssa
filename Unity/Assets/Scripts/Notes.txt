@@ -11,14 +11,22 @@
 
 
 ** TO DO NEXT **
-1) create player gameobject origins (empty gameObject transforms), so that on Start(), manually Instantiate()
-	the character's gameObject (Player 1 has Aska Instantiate() on Player_1__Location, etc)
-	... this way the gameObject is dynamically coded based on lookup tables in Game.cs, so that animations, etc
-	are already linked together in the code (no need for hard coding)
+... remember/learn how to switch scenes in-game...
+1) programmatically create character GameObjects (pre-programmed in lookup tables, Instantiate() on run...)
+	... will require creating Transforms for spawn points
+	... will need to standardize origins on character meshes
 
-2) trigger animations based on game logic...
+2) include basic default animations in lookup table along with GameObjects...
+3) *create UI for special powers & attacks!*
+4) create backend for the special powers as well... ... ...
 
-... animate aska
+7) add backend for character to wear equipment (top, pants, weapon, rings, etc)
+8) create character selection UI with 3D preview
+
+... fix vertex groups for epio (for mocap)
+... animate wooden dummy more
+... add sounds
+
 ... make 3d paper doll dressing room for equipment?
 
 

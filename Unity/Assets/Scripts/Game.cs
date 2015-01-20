@@ -7,10 +7,6 @@ using System.Collections.Generic;
 
 public class Game : MonoBehaviour {
 
-    bool consoleActive = false;
-    public GameObject consolePanel;
-    public Text consoleInput, consoleLog;
-
     public Player Player_1,
         Enemy_1, Enemy_2, Enemy_3;
 
@@ -30,10 +26,10 @@ public class Game : MonoBehaviour {
         Enemy_2.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
         Enemy_3.Stats_Changed += new Player.Stats_Changed_Handler(Update_Stats);
 
-        Player_1.Console_Output += new Player.Console_Output_Handler(Console_Output);
-        Enemy_1.Console_Output += new Player.Console_Output_Handler(Console_Output);
-        Enemy_2.Console_Output += new Player.Console_Output_Handler(Console_Output);
-        Enemy_3.Console_Output += new Player.Console_Output_Handler(Console_Output);
+        Player_1.Combat_Output += new Player.Combat_Output_Handler(Combat_Output);
+        Enemy_1.Combat_Output += new Player.Combat_Output_Handler(Combat_Output);
+        Enemy_2.Combat_Output += new Player.Combat_Output_Handler(Combat_Output);
+        Enemy_3.Combat_Output += new Player.Combat_Output_Handler(Combat_Output);
 
         // Construct the playing board
         Playing_Board__Container = GameObject.Find("Playing_Board__Item_Container").transform;
@@ -112,9 +108,14 @@ public class Game : MonoBehaviour {
         Drag_Force = 1000,
         Drag_Damping = 1;
 
+    bool Console_Active = false;
+    public GameObject Console_Panel;
+    public Text Console_Input, Console_Log;
+    
     public GameObject UI_Paused;
     public Text UI_Player_Info, UI_Enemy_Info,
-        UI_Player_Info__Short, UI_Enemy_Info__Short;
+        UI_Player_Info__Short, UI_Enemy_Info__Short,
+        Combat_Log;
 
     void FixedUpdate() {
         Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
@@ -124,7 +125,7 @@ public class Game : MonoBehaviour {
         /* Developer console functions */
         if (Input.GetKeyDown(KeyCode.BackQuote))
             Console_Toggle();
-        if (consoleActive)
+        if (Console_Active)
             Console_Process();
 
 
@@ -271,8 +272,8 @@ public class Game : MonoBehaviour {
     }
 
     void Console_Toggle() {
-        consoleActive = !consoleActive;
-        consolePanel.SetActive(consoleActive);
+        Console_Active = !Console_Active;
+        Console_Panel.SetActive(Console_Active);
     }
     void Console_Process() {
         foreach (char c in Input.inputString) {
@@ -282,47 +283,109 @@ public class Game : MonoBehaviour {
 
                 case '\n':
                 case '\r':
-                    Console_Parse(consoleInput.text);
-                    Console_Output(string.Concat("> ", consoleInput.text));
-                    consoleInput.text = "";
+                    Console_Output(string.Concat("> ", Console_Input.text));    
+                    Console_Parse(Console_Input.text);
+                    Console_Input.text = "";
                     break;
 
                 case '\b':
-                    if (consoleInput.text.Length > 0)
-                        consoleInput.text = consoleInput.text.Remove(consoleInput.text.Length - 1);
+                    if (Console_Input.text.Length > 0)
+                        Console_Input.text = Console_Input.text.Remove(Console_Input.text.Length - 1);
                     break;
 
                 default:
-                    consoleInput.text += c;
+                    Console_Input.text += c;
                     break;
             }
         }
     }
-    void Console_Parse(string incCommand) {
-        incCommand = incCommand.ToLower();
-        switch (incCommand) { // For one worded commands (e.g. help, version, quit, etc)
+    void Console_Parse(string incString) {
+        string[] incCommand = incString.ToLower().Split(' ');
+        
+        if (incCommand.Length == 0)
+            return;
+        
+        switch (incCommand[0].Trim()) {
             default:
-                break;
-
-            case "version":
-                Console_Output("What version is this? ... uh... alpha.");
+                Console_Output("... input not recognized :(");
                 return;
 
+            case "set":
+                Player incPlayer;   // Which player are we setting values for?
+                if (incCommand[1] == null) return;    
+                switch (incCommand[1].Trim()) {
+                    default: return;
+                    case "help":
+                        Console_Output("set [player/enemy1/enemy2/enemy3] [field] [value] [values] \nfields: level, health, health_max, mana, damage");
+                        return;
+                    case "player": incPlayer = Player_1; break;
+                    case "enemy1": incPlayer = Enemy_1; break;
+                    case "enemy2": incPlayer = Enemy_2; break;
+                    case "enemy3": incPlayer = Enemy_3; break;
+                }
+
+                if (incCommand[2] == null || incCommand[3] == null) return;
+                switch (incCommand[2].Trim()) {
+                    default: return;
+                    case "level":
+                        incPlayer.Character.Level = int.Parse(incCommand[3].Trim());
+                        Update_Stats();
+                        return;
+                    case "health":
+                        incPlayer.Character.Health = int.Parse(incCommand[3].Trim());
+                        if (incPlayer.Character.Health > incPlayer.Character.Health_Max)
+                            incPlayer.Character.Health_Max = incPlayer.Character.Health;
+                        Update_Stats();
+                        return;
+                    case "health_max": 
+                        incPlayer.Character.Health_Max = int.Parse(incCommand[3].Trim());
+                        Update_Stats();
+                        return;
+                    case "mana":
+                        if (incCommand[4] == null || incCommand[5] == null || incCommand[6] == null || incCommand[7] == null) return;
+                        incPlayer.Mana_Count[0] = int.Parse(incCommand[3].Trim());
+                        incPlayer.Mana_Count[1] = int.Parse(incCommand[4].Trim());
+                        incPlayer.Mana_Count[2] = int.Parse(incCommand[5].Trim());
+                        incPlayer.Mana_Count[3] = int.Parse(incCommand[6].Trim());
+                        incPlayer.Mana_Count[4] = int.Parse(incCommand[7].Trim());
+                        Update_Stats();
+                        return;
+                    case "damage":
+                        if (incCommand[4] == null || incCommand[5] == null || incCommand[6] == null || incCommand[7] == null) return;
+                        incPlayer.Character.Damage[0] = double.Parse(incCommand[3].Trim());
+                        incPlayer.Character.Damage[1] = double.Parse(incCommand[4].Trim());
+                        incPlayer.Character.Damage[2] = double.Parse(incCommand[5].Trim());
+                        incPlayer.Character.Damage[3] = double.Parse(incCommand[6].Trim());
+                        incPlayer.Character.Damage[4] = double.Parse(incCommand[7].Trim());
+                        return;
+                }
+
+                return;
             case "clear":
-                consoleLog.text = "";
+                Console_Log.text = "";
                 return;
         }
+
+        Console_Output("... input error, unable to process :'(");
     }
     void Console_Output(string incOutput) {
-        consoleLog.text = string.Concat(consoleLog.text, "\n", incOutput);
+        Console_Log.text = string.Concat(Console_Log.text, "\n", incOutput);
         // Scroll the console down...
-        if (consoleLog.preferredHeight > consoleLog.rectTransform.rect.height) {
-            consoleLog.text = consoleLog.text.Trim('\n', ' ');
-            consoleLog.text = consoleLog.text.Substring(consoleLog.text.IndexOf('\n'));
+        if (Console_Log.preferredHeight > Console_Log.rectTransform.rect.height) {
+            Console_Log.text = Console_Log.text.Trim('\n', ' ');
+            Console_Log.text = Console_Log.text.Substring(Console_Log.text.IndexOf('\n'));
         }
     }
 
-    void Update_Stats(Player sender, EventArgs e) {
+    void Combat_Output(string incOutput) {
+        Combat_Log.text = string.Concat(Combat_Log.text, "\n", incOutput).Trim();
+        // Scroll the combat log down...
+        if (Combat_Log.preferredHeight > Combat_Log.rectTransform.rect.height) {
+            Combat_Log.text = Combat_Log.text.Trim('\n', ' ');
+            Combat_Log.text = Combat_Log.text.Substring(Combat_Log.text.IndexOf('\n'));
+        }
+    }
+    void Update_Stats() {
         Refresh__Mana_Boards();
 
         if (UI_Player_Info__Short != null && Player_1.Character != null)
@@ -491,11 +554,11 @@ public class Game : MonoBehaviour {
         public int[] Mana_Count = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length],
                         Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
 
-        public delegate void Console_Output_Handler(string consoleOutput);
-        public event Console_Output_Handler Console_Output;
-        public delegate void Stats_Changed_Handler(Player sender, EventArgs e);
+        public delegate void Combat_Output_Handler(string combatOutput);
+        public event Combat_Output_Handler Combat_Output;
+        public delegate void Stats_Changed_Handler();
         public event Stats_Changed_Handler Stats_Changed;
-        void Pass__Stats_Changed(Characters sender, EventArgs e) { Stats_Changed(this, e); }
+        void Pass__Stats_Changed(Characters sender, EventArgs e) { Stats_Changed(); }
 
         public Player(Types incType) {
             _Type = incType;
@@ -505,21 +568,21 @@ public class Game : MonoBehaviour {
             set { 
                 _Character = value; 
                 _Character.Stats_Changed += new Characters.Stats_Changed_Handler(Pass__Stats_Changed);
-                Stats_Changed(this, new EventArgs());
+                Stats_Changed();
             }
         }
 
         public int Mana(int[] manaArray, Game.Mana_Colors Color) { return manaArray[(int)Color]; }
         public void Add_Mana(int[] manaArray, Game.Mana_Colors Color, int Amount) { 
             manaArray[(int)Color] += Amount;
-            Stats_Changed(this, new EventArgs());
+            Stats_Changed();
         }
         public bool Use_Mana(int [] manaArray, Mana_Colors incColor, int Amount) {
             if (manaArray[(int)incColor] < Amount)
                 return false;
             manaArray[(int)incColor] -= Amount;
 
-            Stats_Changed(this, new EventArgs());
+            Stats_Changed();
             return true;
         }
 
@@ -542,17 +605,17 @@ public class Game : MonoBehaviour {
             }
             
             // Output information to console
-            if (Console_Output != null) {
+            if (Combat_Output != null) {
                 if (willHit)
-                    Console_Output(String.Format("{0} attacked {1} for {2} damage!!", Character.Name, incTarget.Character.Name, totalDamage));
+                    Combat_Output(String.Format("{0} attacked {1} for {2} damage!!", Character.Name, incTarget.Character.Name, totalDamage));
                 else
-                    Console_Output(String.Format("{0}'s attack missed {1}!", Character.Name, incTarget.Character.Name));
+                    Combat_Output(String.Format("{0}'s attack missed {1}!", Character.Name, incTarget.Character.Name));
             }
             if (willHit)
                 incTarget.Character.Health = (int)(incTarget.Character.Health - totalDamage < 0 ? 0 : incTarget.Character.Health - totalDamage);
 
             if (incTarget.Character.Health == 0)
-                Console_Output(String.Format("*** {0} defeated {1}!!! ***", Character.Name, incTarget.Character.Name));
+                Combat_Output(String.Format("*** {0} defeated {1}!!! ***", Character.Name, incTarget.Character.Name));
 
             // Animate models
             if (_Animator != null)
@@ -562,7 +625,7 @@ public class Game : MonoBehaviour {
 
             // Routine stuff
             Mana_Buffer = new int[_Mana_Colors];
-            Stats_Changed(this, new EventArgs());
+            Stats_Changed();
         }
     }
 
