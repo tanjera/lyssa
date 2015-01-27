@@ -11,6 +11,13 @@
 
 
 ** TO DO NEXT **
+
+-> Load Prototypes with Resources.Load()... will need to make all meshes into Prefabs
+
+1 -> MAKE TOOLTIPS FOLLOW MOUSE FOR MOUSEOVER... eliminates static text panels
+2 -> replace blue with black
+3 -> FIX EPIO vertex groups for mocap retargeting
+
 ... remember/learn how to switch scenes in-game...
 1) programmatically create character GameObjects (pre-programmed in lookup tables, Instantiate() on run...)
 	... will require creating Transforms for spawn points
@@ -20,6 +27,9 @@
 
 3) **create UI for special powers & attacks!**
 	... just create badge stones and place above Epio's head... no need for a full UI... click the badges to trigger
+	-> badges can be simple stones with UV for badge images (diff & norm)
+	-> create Matrix for badge stones...
+	... can eventually have tooltips
 4) create backend for the special powers as well... ... ...
 	... mostly done, just need to run the actual delegate Action() and
 		1) funnel skills through triggering function to standardize Console_Output()
@@ -83,11 +93,11 @@ CHARACTERS/CLASSES (with primary & secondary colors!)
 	- Aeol (M) is Aeolus, ruler of the winds
 		- Chione (F) minor goddess of snow
 	
-	DIVINER (Y/W)
+	DIVINER (Y/G)
 	- Epio (F) is Epione goddess of soothing of pain
 		-Lethei (M) is Aletheia, truth or disclosure
 
-	REAPER (R/G)
+	REAPER (R/W)
 	- Achlys (F) spirit of the mist of death 
 		- Thanatos (M) spirit of death and mortality
 

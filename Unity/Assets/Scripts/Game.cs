@@ -13,7 +13,9 @@ public class Game : MonoBehaviour {
     public bool has_Enemy_1, has_Enemy_2, has_Enemy_3;
 
     void Start() {
-        
+
+        Console_Version.text = String.Format("{0} v{1}", Program_Name, Program_Version);
+
         State__Major = Game_States__Major.Initializing;
 
         Player_1 = new Player(Player.Types.Human);
@@ -71,6 +73,7 @@ public class Game : MonoBehaviour {
     }
 
     void Hack__Setup_Test_States() {
+        Player_1.Model = GameObject.Find("Epio");
         Player_1.Character = Epio;
         Player_1.Target = Enemy_1;
 
@@ -110,12 +113,15 @@ public class Game : MonoBehaviour {
 
     bool Console_Active = false;
     public GameObject Console_Panel;
-    public Text Console_Input, Console_Log;
-    
+    public Text Console_Input, 
+                Console_Log, 
+                Console_Version;
+
     public GameObject UI_Paused;
-    public Text UI_Player_Info, UI_Enemy_Info,
-        UI_Player_Info__Short, UI_Enemy_Info__Short,
-        Combat_Log;
+    public Text Combat_Log;
+
+    public GameObject Tooltip_Panel;
+    public Text Tooltip_Text;
 
 
     void FixedUpdate() {
@@ -129,7 +135,7 @@ public class Game : MonoBehaviour {
         if (Console_Active)
             Console_Process();
 
-
+        
         /* Main game routine */
         switch (State__Major) {
             default:
@@ -145,25 +151,31 @@ public class Game : MonoBehaviour {
                 if (Input.GetKeyDown(KeyCode.Escape))
                     Change_State(Game_States__Major.Paused);
                 
-                /* Player input if it's the player's turn, to drag stones */
-                if (State__Minor == Game_States__Minor.Turn_Player__Idle) {
-                    if (Input.GetMouseButtonDown(0)) {
-                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-                        RaycastHit hit;
-                        if (Physics.Raycast(ray, out hit)) {
-                            if (hit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Interactive)) {
-                                if (hit.transform.name == "Stone_9__Playing_Board") {
-                                    Drag_Item = Playing_Board.Cells.Find(obj => obj.Item.Transform == hit.transform).Item;
-                                    Drag_Color = Drag_Item.Color;   // Last color dragged, never cleared, only reassigned for reference.
-                                    Release_Item(Drag_Item);
+                /* Throw a raycast for processing... mouseover tooltip? drag a stone? activate a special power? */
+                Ray updateRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit updateHit;
+                Physics.Raycast(updateRay, out updateHit);
 
-                                    Drag_Depth = Camera.main.transform.InverseTransformPoint(hit.point).z;
-                                    Drag_Joint = Drag_AttachJoint(hit.rigidbody, hit.point);
-                                    Scale(hit.transform, hit.transform.localScale * 0.7f, 0.1f);
-                                    Change_State(Game_States__Minor.Turn_Player__Dragging);
-                                }
-                            }
-                        }
+                /* Mouseover tooltips */
+                if (updateHit.transform != null
+                    && updateHit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Mouseover))
+                    Tooltip(updateHit.transform);
+                else
+                    Tooltip(null);
+
+                /* Player's turn, drag stones */
+                if (State__Minor == Game_States__Minor.Turn_Player__Idle) {
+                    if (Input.GetMouseButtonDown(0) && updateHit.transform != null 
+                        && updateHit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Interactive)
+                        && updateHit.transform.name == "Stone_9__Playing_Board") {
+                            Drag_Item = Playing_Board.Cells.Find(obj => obj.Item.Transform == updateHit.transform).Item;
+                            Drag_Color = Drag_Item.Color;   // Last color dragged, never cleared, only reassigned for reference.
+                            Release_Item(Drag_Item);
+
+                            Drag_Depth = Camera.main.transform.InverseTransformPoint(updateHit.point).z;
+                            Drag_Joint = Drag_AttachJoint(updateHit.rigidbody, updateHit.point);
+                            Scale(updateHit.transform, updateHit.transform.localScale * 0.7f, 0.1f);
+                            Change_State(Game_States__Minor.Turn_Player__Dragging);
                     }
                 }
 
@@ -250,23 +262,6 @@ public class Game : MonoBehaviour {
     }
 
     void Pause() {
-
-        UI_Player_Info.text = String.Format("<size=15>{0}</size>\n Level {1}\n\n Exp {2} / {3}\n Health {4} / {5}\n\n\n"
-            + "<size=11>Mana Pool\n {6} G : {7} B : {8} W\n {9} Y : {10} R\n\n\n"
-            + "Damage\n {11} G : {12} B : {13} W\n {14} Y : {15} R</size>",
-            Player_1.Character.Name, Player_1.Character.Level,
-            Player_1.Character.Experience, Player_1.Character.Experience_Max,
-            Player_1.Character.Health, Player_1.Character.Health_Max,
-            Player_1.Mana_Count[0], Player_1.Mana_Count[1], Player_1.Mana_Count[2], Player_1.Mana_Count[3], Player_1.Mana_Count[4],
-            Player_1.Character.Damage[0], Player_1.Character.Damage[1], Player_1.Character.Damage[2], Player_1.Character.Damage[3], Player_1.Character.Damage[4]
-            );
-
-        // FIX: CHECK FOR ENEMIES (1, 2, or 3?) and CHECK IF NULL before accessing... ... ...
-        UI_Enemy_Info.text = String.Format("<size=15>{0}</size>\n Level {1}\n\n Health {2} / {3}",
-            Enemy_1.Character.Name, Enemy_1.Character.Level,
-            Enemy_1.Character.Health, Enemy_1.Character.Health_Max
-            );
-
         UI_Paused.SetActive(true);
     }
     void Unpause() {
@@ -379,6 +374,44 @@ public class Game : MonoBehaviour {
         }
     }
 
+    void Tooltip(Transform incMouseover) {
+            if (incMouseover == null) {
+                Tooltip_Panel.SetActive(false); 
+                return;
+            }
+            else if (incMouseover == Player_1.Model.transform) {
+                Tooltip_Text.text = String.Format("<size=14>{0}\n Level {1}</size>\n\n Exp {2} / {3}\n Health {4} / {5}\n\n\n"
+                    + "Damage\n {6} G : {7} B : {8} W\n {9} Y : {10} R",
+                    Player_1.Character.Name, Player_1.Character.Level,
+                    Player_1.Character.Experience, Player_1.Character.Experience_Max,
+                    Player_1.Character.Health, Player_1.Character.Health_Max,
+                    Player_1.Character.Damage[0], Player_1.Character.Damage[1], Player_1.Character.Damage[2], Player_1.Character.Damage[3], Player_1.Character.Damage[4]
+                    );
+            }
+            else if (incMouseover == Enemy_1.Model.transform) {
+                Tooltip_Text.text = String.Format("<size=14>{0}\n Level {1}</size>\n\n Health {2} / {3}",
+                    Enemy_1.Character.Name, Enemy_1.Character.Level,
+                    Enemy_1.Character.Health, Enemy_1.Character.Health_Max
+                    );
+            }
+            else if (incMouseover.transform.name == "Mana Board Player") {
+                Tooltip_Text.text = String.Format("<size=14>Mana Pool</size>\n {0} G : {1} B : {2} W : {3} Y : {4} R",
+                    Player_1.Mana_Count[0], Player_1.Mana_Count[1], Player_1.Mana_Count[2], Player_1.Mana_Count[3], Player_1.Mana_Count[4]
+                    );
+            }
+            else {
+                Tooltip_Panel.SetActive(false);
+                return;
+            }
+
+            Vector3 newPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Tooltip_Panel.transform.position = new Vector3(
+                newPosition.x,
+                newPosition.y, 
+                Tooltip_Panel.transform.position.z);
+            Tooltip_Panel.SetActive(true);
+    }
+
     void Combat_Output(string incOutput) {
         Combat_Log.text = string.Concat(Combat_Log.text, "\n", incOutput).Trim();
         // Scroll the combat log down...
@@ -389,20 +422,6 @@ public class Game : MonoBehaviour {
     }
     void Update_Stats() {
         Refresh__Mana_Boards();
-
-        if (UI_Player_Info__Short != null && Player_1.Character != null)
-            UI_Player_Info__Short.text = String.Format("{0}\n Level {1}\n\n Exp {2} / {3}\n Health {4} / {5}",
-                Player_1.Character.Name, Player_1.Character.Level,
-                Player_1.Character.Experience, Player_1.Character.Experience_Max,
-                Player_1.Character.Health, Player_1.Character.Health_Max
-                );
-
-        // FIX: CHECK FOR ENEMIES (1, 2, or 3?) and CHECK IF NULL before accessing... ... ...
-        if (UI_Enemy_Info__Short != null && Enemy_1.Character != null)
-            UI_Enemy_Info__Short.text = String.Format("{0}\n Level {1}\n\n Health {2} / {3}",
-                Enemy_1.Character.Name, Enemy_1.Character.Level,
-                Enemy_1.Character.Health, Enemy_1.Character.Health_Max
-                );
     }
 
     Transform Drag_AttachJoint(Rigidbody body, Vector3 attachPoint) {
@@ -501,7 +520,12 @@ public class Game : MonoBehaviour {
 
 #region DEFINITIONS
 
-    public static string Layer__Interactive = "Interactive";
+    public static string
+        Program_Name = "Lyssa",
+        Program_Version = "0.15.127";
+
+    public static string Layer__Interactive = "Interactive",
+                            Layer__Mouseover = "Mouseover";
 
     public static int _Mana_Colors = 5;
     public static float Mana_Board__Multiplier = 2.5f;
@@ -702,13 +726,12 @@ public class Game : MonoBehaviour {
 
         public delegate void _Action(Player incPlayer, Player incTarget);
 
-        public string Name, Description;
+        public string Name;
         public int[] Mana;
         _Action Action;
 
-        public Skill(string incName, string incDescription, int[] incMana, _Action incAction) {
+        public Skill(string incName, int[] incMana, _Action incAction) {
             Name = incName;
-            Description = incDescription;
             Mana = incMana;
             Action = incAction;
         }
@@ -716,15 +739,15 @@ public class Game : MonoBehaviour {
 
     static Characters
         Epio = new Characters("Epio",
-            75, 25, new double[] { 0.1, 0.1, 1, 1, 0.1 }, 1.5,
+            75, 25, new double[] { 1, 0.1, 0.1, 1, 0.1 }, 1.5,
             new List<Skill>() { 
-                new Skill("Soothe", "It heals...", new int[] { 0, 0, 10, 0, 0 },
+                new Skill("Soothe", new int[] { 0, 0, 0, 10, 0 },
 	                delegate (Player incPlayer, Player incTarget) {
 		                incPlayer.Character.Health += incPlayer.Character.Health_Max * incPlayer.Mana_Count[Mana_Colors.White.GetHashCode()] / 50;
 		                if (incPlayer.Character.Health > incPlayer.Character.Health_Max)
 			                incPlayer.Character.Health = incPlayer.Character.Health_Max;
 		                }),
-		        new Skill("Wither", "It hurts...", new int[] { 0, 0, 0, 10, 0 },
+		        new Skill("Wilt", new int[] { 10, 0, 0, 0, 0 },
 	                delegate (Player incPlayer, Player incTarget) {
 		                incTarget.Character.Health -= incPlayer.Character.Health_Max * incPlayer.Mana_Count[Mana_Colors.Yellow.GetHashCode()] / 50;
 		                })
