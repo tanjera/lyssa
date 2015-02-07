@@ -33,6 +33,11 @@ public class Game : MonoBehaviour {
         Enemy_2.Combat_Output += new Player.Combat_Output_Handler(Combat_Output);
         Enemy_3.Combat_Output += new Player.Combat_Output_Handler(Combat_Output);
 
+        Player_1.Animation_Play += new Player.Animation_Play_Handler(Animation_Play);
+        Enemy_1.Animation_Play += new Player.Animation_Play_Handler(Animation_Play);
+        Enemy_2.Animation_Play += new Player.Animation_Play_Handler(Animation_Play);
+        Enemy_3.Animation_Play += new Player.Animation_Play_Handler(Animation_Play);
+
         // Construct the playing board
         Playing_Board__Container = GameObject.Find("Playing_Board__Item_Container").transform;
         Playing_Board__Positions = GameObject.Find("Playing_Board__Item_Positions").transform;
@@ -74,6 +79,7 @@ public class Game : MonoBehaviour {
 
     void Hack__Setup_Test_States() {
         Player_1.Model = GameObject.Find("Epio");
+        Player_1._Animator = Player_1.Model.GetComponent<Animator>();
         Player_1.Character = Epio;
         Player_1.Target = Enemy_1;
 
@@ -158,16 +164,18 @@ public class Game : MonoBehaviour {
 
                 /* Mouseover tooltips */
                 if (updateHit.transform != null
-                    && updateHit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Mouseover))
+                    && (updateHit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Mouseover)
+                        || updateHit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Interactive)))
                     Tooltip(updateHit.transform);
                 else
                     Tooltip(null);
 
-                /* Player's turn, drag stones */
+                /* Player's turn, drag stones, activate skills */
                 if (State__Minor == Game_States__Minor.Turn_Player__Idle) {
                     if (Input.GetMouseButtonDown(0) && updateHit.transform != null 
-                        && updateHit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Interactive)
-                        && updateHit.transform.name == "Stone_9__Playing_Board") {
+                        && updateHit.transform.gameObject.layer == LayerMask.NameToLayer(Layer__Interactive)) {
+                        
+                        if (updateHit.transform.name == "Stone_Round__Playing_Board") {
                             Drag_Item = Playing_Board.Cells.Find(obj => obj.Item.Transform == updateHit.transform).Item;
                             Drag_Color = Drag_Item.Color;   // Last color dragged, never cleared, only reassigned for reference.
                             Release_Item(Drag_Item);
@@ -176,6 +184,12 @@ public class Game : MonoBehaviour {
                             Drag_Joint = Drag_AttachJoint(updateHit.rigidbody, updateHit.point);
                             Scale(updateHit.transform, updateHit.transform.localScale * 0.7f, 0.1f);
                             Change_State(Game_States__Minor.Turn_Player__Dragging);
+                        }
+                        // TO-DO: Dynamically code skill trigger... not this hard-coded hack
+                        else if (updateHit.transform.name == "Skill__Soothe") 
+                            { Player_1.Use_Skill(Player_1.Character.Skills[0]); }
+                        else if (updateHit.transform.name == "Skill__Wilt") 
+                            { Player_1.Use_Skill(Player_1.Character.Skills[1]); }
                     }
                 }
 
@@ -204,6 +218,15 @@ public class Game : MonoBehaviour {
         }   
     }
 
+    void Change_State(Game_States__Major incState) {
+        Game_States__Major oldState = State__Major;
+        State__Major = incState;
+
+        if (incState == Game_States__Major.Paused)
+            Pause();
+        else if (incState == Game_States__Major.Running && oldState == Game_States__Major.Paused)
+            Unpause();
+    }
     void Change_State(Game_States__Minor incState) {
         Game_States__Minor oldState = State__Minor;
         State__Minor = incState;
@@ -214,7 +237,7 @@ public class Game : MonoBehaviour {
             case Game_States__Minor.Turn_Player__Attack:
                 if (Player_1 != null) {
                     Player_1.Attack(Player_1.Target);
-                    Change_State(Game_States__Minor.Turn_Enemy1, 2);
+                    Change_State(Game_States__Minor.Turn_Enemy1, 3);
                 }
                 else Change_State(Game_States__Minor.Turn_Enemy1);
                 return;
@@ -243,15 +266,6 @@ public class Game : MonoBehaviour {
                 else Change_State(Game_States__Minor.Turn_Player__Idle);
                 return;
         }
-    }
-    void Change_State(Game_States__Major incState) {
-        Game_States__Major oldState = State__Major;
-        State__Major = incState;
-
-        if (incState == Game_States__Major.Paused)
-            Pause();
-        else if (incState == Game_States__Major.Running && oldState == Game_States__Major.Paused)
-            Unpause();
     }
     void Change_State(Game_States__Minor incState, float waitTime) {
         StartCoroutine(Change_State__Delay(incState, waitTime));
@@ -399,6 +413,10 @@ public class Game : MonoBehaviour {
                     Player_1.Mana_Count[0], Player_1.Mana_Count[1], Player_1.Mana_Count[2], Player_1.Mana_Count[3], Player_1.Mana_Count[4]
                     );
             }
+            else if (incMouseover.transform.name == "Skill__Soothe") 
+                { Tooltip_Text.text = String.Format("<size=14>Soothe</size>\n 10 Yellow\n\n Heal yourself by a fraction of your green mana."); }
+            else if (incMouseover.transform.name == "Skill__Wilt") 
+                { Tooltip_Text.text = String.Format("<size=14>Wilt</size>\n 10 Green\n\n Your opponent wilts by a fraction of your yellow mana."); }
             else {
                 Tooltip_Panel.SetActive(false);
                 return;
@@ -422,6 +440,13 @@ public class Game : MonoBehaviour {
     }
     void Update_Stats() {
         Refresh__Mana_Boards();
+    }
+
+    void Animation_Play(Animator incAnimator, string incAnimation, float incDelay) 
+        { StartCoroutine(Animation_Play__Coroutine(incAnimator, incAnimation, incDelay)); }
+    IEnumerator Animation_Play__Coroutine(Animator incAnimator, string incAnimation, float incDelay) {
+        yield return new WaitForSeconds(incDelay);
+        incAnimator.Play(incAnimation);
     }
 
     Transform Drag_AttachJoint(Rigidbody body, Vector3 attachPoint) {
@@ -576,7 +601,6 @@ public class Game : MonoBehaviour {
         public Animator _Animator;
         public Player Target;
 
-
         public int[] Mana_Count = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length],
                         Mana_Buffer = new int[Enum.GetValues(typeof(Game.Mana_Colors)).Length];
 
@@ -585,6 +609,8 @@ public class Game : MonoBehaviour {
         public delegate void Stats_Changed_Handler();
         public event Stats_Changed_Handler Stats_Changed;
         void Pass__Stats_Changed(Characters sender, EventArgs e) { Stats_Changed(); }
+        public delegate void Animation_Play_Handler(Animator outAnimator, string outAnimation, float outDelay);
+        public event Animation_Play_Handler Animation_Play;
 
         public Player(Types incType) {
             _Type = incType;
@@ -603,12 +629,24 @@ public class Game : MonoBehaviour {
             manaArray[(int)Color] += Amount;
             Stats_Changed();
         }
-        public bool Use_Mana(int [] manaArray, Mana_Colors incColor, int Amount) {
+        public bool Use_Mana(int[] manaArray, Mana_Colors incColor, int Amount) {
             if (manaArray[(int)incColor] < Amount)
                 return false;
             manaArray[(int)incColor] -= Amount;
 
             Stats_Changed();
+            return true;
+        }
+        public bool Use_Mana(int[] manaArray, int[] manaUsing) {
+            if (manaArray.Length != manaUsing.Length)
+                return false;
+
+            for (int i = 0; i < manaArray.Length; i++)
+                if (manaArray[i] < manaUsing[i])
+                    return false;
+
+            for (int i = 0; i < manaArray.Length; i++)
+                manaArray[i] -= manaUsing[i];
             return true;
         }
 
@@ -644,15 +682,25 @@ public class Game : MonoBehaviour {
                 Combat_Output(String.Format("*** {0} defeated {1}!!! ***", Character.Name, incTarget.Character.Name));
 
             // Animate models
-            if (_Animator != null)
-                _Animator.Play("Attack_1");
-            if (Target._Animator != null)
-                Target._Animator.Play("Defend_1");
+            if (_Animator != null && Animation_Play != null)
+                Animation_Play(_Animator, "Attack_1", 0f);
+            if (Target._Animator != null && Animation_Play != null)
+                Animation_Play(Target._Animator, "Defend_1", 1f);
 
             // Routine stuff
             Mana_Buffer = new int[_Mana_Colors];
             Stats_Changed();
         }
+        public void Use_Skill(Skill incSkill) {
+            if (Use_Mana(Mana_Count, incSkill.Mana)) {
+                Combat_Output(String.Format("Using skill {0}!!", incSkill.Name));
+                incSkill.Action(this, Target);
+            }
+            else
+                Combat_Output(String.Format("Not enough mana to use skill {0}!", incSkill.Name));
+        }
+
+        
     }
     public class Characters {
 
@@ -723,12 +771,11 @@ public class Game : MonoBehaviour {
         }
     }
     public class Skill {
-
         public delegate void _Action(Player incPlayer, Player incTarget);
 
         public string Name;
         public int[] Mana;
-        _Action Action;
+        public _Action Action;
 
         public Skill(string incName, int[] incMana, _Action incAction) {
             Name = incName;
@@ -743,7 +790,7 @@ public class Game : MonoBehaviour {
             new List<Skill>() { 
                 new Skill("Soothe", new int[] { 0, 0, 0, 10, 0 },
 	                delegate (Player incPlayer, Player incTarget) {
-		                incPlayer.Character.Health += incPlayer.Character.Health_Max * incPlayer.Mana_Count[Mana_Colors.White.GetHashCode()] / 50;
+		                incPlayer.Character.Health += incPlayer.Character.Health_Max * incPlayer.Mana_Count[Mana_Colors.Green.GetHashCode()] / 50;
 		                if (incPlayer.Character.Health > incPlayer.Character.Health_Max)
 			                incPlayer.Character.Health = incPlayer.Character.Health_Max;
 		                }),
@@ -822,8 +869,6 @@ public class Game : MonoBehaviour {
             });
             return listBuffer;
         }
-
-        
     }   
     
     #endregion
@@ -846,8 +891,8 @@ public class Game : MonoBehaviour {
         Mana_Board_Enemy_2__Positions,
         Mana_Board_Enemy_3__Positions;
 
-    public GameObject Prototype__Stone9,
-                        Prototype__Stone9_Mini;
+    public GameObject Prototype__Stone_Round,
+                        Prototype__Stone_Round_Mini;
     public GameObject[] Prototype__Particles = new GameObject[_Mana_Colors];
 
     Transform Item_Dragging;
@@ -866,18 +911,19 @@ public class Game : MonoBehaviour {
             incMatrix.Cells.Add(newCell);
         }
     }
+    
     void Populate__Playing_Board() {
         Playing_Board.Cells.ForEach(obj => {
-            obj.Item = Create_Item(obj, Items.Types.Stone, Prototype__Stone9,
+            obj.Item = Create_Item(obj, Items.Types.Stone, Prototype__Stone_Round,
                 (Mana_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(Mana_Colors)).Length),
                 Playing_Board__Container, true, true);
-            obj.Item.Object.name = "Stone_9__Playing_Board";
+            obj.Item.Object.name = "Stone_Round__Playing_Board";
         });
     }
     void Refresh__Playing_Board() {
         Playing_Board.Cells.ForEach(obj => {
             if (obj.isEmpty)
-                obj.Item = Create_Item(obj, Items.Types.Stone, Prototype__Stone9,
+                obj.Item = Create_Item(obj, Items.Types.Stone, Prototype__Stone_Round,
                 (Mana_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(Mana_Colors)).Length),
                 Playing_Board__Container, true, true);
         });
@@ -899,6 +945,7 @@ public class Game : MonoBehaviour {
             });
         }
     }
+
     void Populate__Mana_Board(Matrix incMatrix) {
         incMatrix.Cells.ForEach(cell => {
             if (cell.Item != null)
@@ -906,33 +953,33 @@ public class Game : MonoBehaviour {
         
             if (incMatrix == Mana_Board_Player) {
                     if (cell.X == Mana_Board.Experience.GetHashCode()) {
-                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Yellow, Mana_Board_Player__Container, false, false); 
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.Yellow, Mana_Board_Player__Container, false, false); 
                     }
                     else if (cell.X == Mana_Board.Health.GetHashCode()) {
-                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Player__Container, false, false);
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.Red, Mana_Board_Player__Container, false, false);
                     }
                     else if (cell.X == Mana_Board.Green.GetHashCode()) {
-                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Green, Mana_Board_Player__Container, false, false);
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.Green, Mana_Board_Player__Container, false, false);
                     }
                     else if (cell.X == Mana_Board.Blue.GetHashCode()) {
-                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Blue, Mana_Board_Player__Container, false, false);
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.Blue, Mana_Board_Player__Container, false, false);
                     }
                     else if (cell.X == Mana_Board.White.GetHashCode()) {
-                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.White, Mana_Board_Player__Container, false, false);
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.White, Mana_Board_Player__Container, false, false);
                     }
                     else if (cell.X == Mana_Board.Yellow.GetHashCode()) {
-                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Yellow, Mana_Board_Player__Container, false, false);
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.Yellow, Mana_Board_Player__Container, false, false);
                     }
                     else if (cell.X == Mana_Board.Red.GetHashCode()) {
-                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Player__Container, false, false);
+                        cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.Red, Mana_Board_Player__Container, false, false);
                     }
             
             } else if (incMatrix == Mana_Board_Enemy_1)
-                cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Enemy_1__Container, false, false);
+                cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.Red, Mana_Board_Enemy_1__Container, false, false);
             else if (incMatrix == Mana_Board_Enemy_2)
-                cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Enemy_2__Container, false, false);
+                cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.Red, Mana_Board_Enemy_2__Container, false, false);
             else if (incMatrix == Mana_Board_Enemy_3)
-                cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone9_Mini, Mana_Colors.Red, Mana_Board_Enemy_3__Container, false, false);
+                cell.Item = Create_Item(cell, Items.Types.Badge, Prototype__Stone_Round_Mini, Mana_Colors.Red, Mana_Board_Enemy_3__Container, false, false);
 
         });
     }

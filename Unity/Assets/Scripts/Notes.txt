@@ -6,105 +6,82 @@
 1) stones can be dragged outside the board when applied with lots of force; 
 	probably d/t configjoint -> fixedjoint with stone dragging, fixedjoint
 	may "rip" stone through the colliders...
+2) stones can't be dragged after some moves... is this an issue with threading Game_States?
 
 
 
 
 ** TO DO NEXT **
 
--> Load Prototypes with Resources.Load()... will need to make all meshes into Prefabs
+... INTEGRATE OLD SIFR INTO LYSSA ...
+	-> Split Game.cs into different class scripts
+	-> Integrate audio handler
+	-> Scrap input handler
+	-> Scrap HUD
 
-1 -> MAKE TOOLTIPS FOLLOW MOUSE FOR MOUSEOVER... eliminates static text panels
-2 -> replace blue with black
-3 -> FIX EPIO vertex groups for mocap retargeting
+... MAKE HUD FOR NEW SIFR ...
+
+*** TO MAKE PLAYABLE ***
+1) add skyboxes
+2) add ships
+3) "stone" overlay in center
+4) get the stone logic -> HUD playable/usable
+
+
+
+
+... major changes ... !!!!!
+	-> no more counting stones in a mana "count"- instead a max of 30 stones per color
+		e.g. skills requiring 15 stones now require "half" the color pool
+		instead of leveraging equations over mana counts, use the color pool as a multiplier (20/30 stones = 0.66)
+		... colors can be measured in a progress bar type of view
+	-> have SIX colors, three diametrically opposed pairs (called aspects, *not* mana)
+		yellow (ethereal) <-> purple (substance)
+		green (vitality) <-> black (demise)
+		red (strife) <-> white (serenity)
+	-> collecting stones: you can only collect the 3 primary colors of your character; each character has these defined
+		collecting a stone thats not your color subtracts from its opposite color!!!
+		aspect count UI bars csn be represented as a progress bar between the opposing colors, one bar per pair (total 3)
+		eg		[red icon]	:::::::::			[white icon]		halfway
+				[yellow]	::::::::::::::::::	[purple]			full
+				[green]		:					[black]				empty
+
+
+... skills!
+	-> tweak backend for actions/skills
+		1) funnel skills through triggering function to standardize Console_Output()
+			replace delegates with enums for funneling through one major function for processing
+			eg enum Skill_Type { Attack_Single, AoE, DoT, etc }
+			can have delegate return a double that offers the calculation for damage/healing to do
+	-> to Player
+		1) add Modifier class { enum Value_Modified, double Value_Multiplier, enum Permanence, double Permanence_Counter, enum Effect_Interval }
+			enum Value_Modified { HP, Aspect_Aggregation, Damage_Matrix }
+			enum Permanence { Turns, Matches, Hours, Permanent } for how long a modifier lasts
+			enum Effect_Interval { Every_Turn, On_Expiration, etc }
+		2) add List <Modifier> to hold buffs, DoTs, etc
+		3) add function Calculate_Stats that runs every turn to update character stats like damage matrix, resistencd matrix, etc
+		4) add function Process_Modifiers to tick the counter every turn
+		... also Equipment will be able to employ Modifiers to affect character stats
+
+
+
+... bug solution!
+	-> to fix Iterate_Down__Playing_Board(), iterate **from the top** and not from the bottom!!
+
+
+
+... do more programmatically
+	-> load Prototypes with Resources.Load()... will need to make all meshes into Prefabs
+		programmatically create character GameObjects (pre-programmed in lookup tables, Instantiate() on run...)
+		... will require creating Transforms for spawn points
+		... will need to standardize origins on character meshes
+	-> include basic default animations in lookup table along with GameObjects...
+		
+
 
 ... remember/learn how to switch scenes in-game...
-1) programmatically create character GameObjects (pre-programmed in lookup tables, Instantiate() on run...)
-	... will require creating Transforms for spawn points
-	... will need to standardize origins on character meshes
-
-2) include basic default animations in lookup table along with GameObjects...
-
-3) **create UI for special powers & attacks!**
-	... just create badge stones and place above Epio's head... no need for a full UI... click the badges to trigger
-	-> badges can be simple stones with UV for badge images (diff & norm)
-	-> create Matrix for badge stones...
-	... can eventually have tooltips
-4) create backend for the special powers as well... ... ...
-	... mostly done, just need to run the actual delegate Action() and
-		1) funnel skills through triggering function to standardize Console_Output()
-		2) add modifiers to guide heal/damage values, enable some Random.Range functionality
-		3) pass Action an int totalDamage instead of doing the damage within the Action itself?
-
-7) add backend for character to wear equipment (top, pants, weapon, rings, etc)
-8) create character selection UI with 3D preview
-
-... fix vertex groups for epio (for mocap)
-... animate wooden dummy more
-... add sounds
-
-... make 3d paper doll dressing room for equipment?
 
 
-
-
-** CODE **
-
-
-
-
-** AESTHETIC **
-
-
-
-
-
-** GAME LOGIC **
-1) turn based, each turn computer hits human, human hits computer
-	each stone broken adds to damage dealt per turn (for example weapon is fire staff, does 3 dmg/1 red mana, 2 per yellow, 1 per white, etc)
-	human able to use abilities based on mana accumulated (color based)
-	but the mana board accumulation still remains its own mechanic where it costs mana to break non-dragging colors
-
-
-
-
-** EVENTUALLY... **
-- add currency...
-- add board items (silver coin, magical weapons, etc)
-
-
-
-
-** BACKSTORY **
-STORY: Lyssa, spirit of rage and fury has become empowered (method/how?)
-
-
-CHARACTERS/CLASSES (with primary & secondary colors!)
-
-	WARRIOR (R/Y)
-	- Soter (M) is husband of Praxidike, spirit of safety, preservation, and deliverance from harm
-		- Ioxis (F) is Proioxis, spirit of onrush in battle
-	
-	HUNTER/ROGUE (G/B)
-	- Techne (M) spirit of technological skill, craftsmanship (archer)
-		- Apate (F) spirit of deciet (knives)
-
-	ELEMENTALIST (W/B)
-	- Aeol (M) is Aeolus, ruler of the winds
-		- Chione (F) minor goddess of snow
-	
-	DIVINER (Y/G)
-	- Epio (F) is Epione goddess of soothing of pain
-		-Lethei (M) is Aletheia, truth or disclosure
-
-	REAPER (R/W)
-	- Achlys (F) spirit of the mist of death 
-		- Thanatos (M) spirit of death and mortality
-
-
-
-
-ENEMIES: ... bosses?
-	- Heca (F) is Hecate, goddess of the moon, magic, witchcraft, sorcery; has many followers (e.g. summoner??)
-
-
+... once playable ...
+	-> add currency
+	-> add a store for modules

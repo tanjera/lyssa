@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class __Camera : MonoBehaviour {
+public class __Camera__Aspect_Ratio : MonoBehaviour {
 
     void Start() {
         float targetaspect = 16.0f / 9.0f;
