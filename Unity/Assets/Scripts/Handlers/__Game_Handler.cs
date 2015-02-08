@@ -45,8 +45,6 @@ public class __Game_Handler : MonoBehaviour {
 
         State__Major = Game_States__Major.Running;
         State__Minor = Game_States__Minor.Turn_Player__Idle;
-        
-
 
         // HACK HACK HACK SETUP TEST STATES
         Player.Ship.Target = Enemy_1.Ship;

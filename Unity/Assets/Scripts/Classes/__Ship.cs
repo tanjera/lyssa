@@ -49,7 +49,7 @@ public class __Ship {
         if (Target == null)
             return;
 
-        Target.Damage(5, 1, 1, 1);
+        Target.Damage(35, 1, 1, 1);
     }
     public void Damage(double rawDamage, double multShield, double multArmor, double multStructure) {
         double buf;

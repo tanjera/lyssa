@@ -6,29 +6,20 @@
 1) stones can be dragged outside the board when applied with lots of force; 
 	probably d/t configjoint -> fixedjoint with stone dragging, fixedjoint
 	may "rip" stone through the colliders...
-2) stones can't be dragged after some moves... is this an issue with threading Game_States?
-
 
 
 
 ** TO DO NEXT **
 
 
-like now:
-make tiles spheres
-get a good particle texture
 add particles to tile being dragged
-make HUD...
 
 ... INTEGRATE OLD SIFR INTO LYSSA ...
 	-> Integrate audio handler
 
-... MAKE HUD FOR NEW SIFR ...
 
 *** TO MAKE PLAYABLE ***
-1) add skyboxes
 2) add ships
-3) "stone" overlay in center
 4) get the stone logic -> HUD playable/usable
 
 
@@ -79,7 +70,6 @@ make HUD...
 		programmatically create character GameObjects (pre-programmed in lookup tables, Instantiate() on run...)
 		... will require creating Transforms for spawn points
 		... will need to standardize origins on character meshes
-	-> include basic default animations in lookup table along with GameObjects...
 		
 
 

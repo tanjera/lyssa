@@ -52,6 +52,7 @@
     <Compile Include="Assets\Scripts\Classes\__Player.cs" />
     <Compile Include="Assets\Scripts\Classes\__Ship__Module.cs" />
     <Compile Include="Assets\Scripts\Handlers\__Game_Handler.cs" />
+    <Compile Include="Assets\Scripts\UI\__Header.cs" />
     <Compile Include="Assets\Scripts\UI\__Console.cs" />
     <Compile Include="Assets\Scripts\UI\__Tooltip.cs" />
     <Compile Include="Assets\Scripts\Objects\_Tile.cs" />

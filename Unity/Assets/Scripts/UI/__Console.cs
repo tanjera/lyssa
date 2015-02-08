@@ -18,7 +18,7 @@ public class __Console : MonoBehaviour {
     }
 
     void Start() {
-        Version.text = String.Format("{0} v{1}", __Definitions.Program_Name, __Definitions.Program_Version);
+        Version.text = String.Format("{0} v{1}", __Definitions.Program_Name.ToLower(), __Definitions.Program_Version.ToLower());
     }
 
     void Update() {

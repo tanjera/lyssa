@@ -11,8 +11,8 @@ public class __Definitions {
                             Layer__Mouseover = "Mouseover",
                             
                             Object__Game_Controller = "_Game Controller",
-                            Object__Console = "_Console",
-                            Object__Tooltip = "_Tooltip",
+                            Object__Console = "UI_Console",
+                            Object__Tooltip = "UI_Tooltip",
 
                             Object__Playing_Board__Container = "Playing_Board__Item_Container",
                             Object__Playing_Board__Positions = "Playing_Board__Item_Positions",
