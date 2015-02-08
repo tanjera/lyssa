@@ -47,10 +47,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Game.cs" />
-    <Compile Include="Assets\Scripts\__Camera.cs" />
-    <Compile Include="Assets\Scripts\__Items.cs" />
-    <Compile Include="Assets\Scripts\__Particles.cs" />
+    <Compile Include="Assets\Scripts\Classes\__Ship.cs" />
+    <Compile Include="Assets\Scripts\Classes\__Definitions.cs" />
+    <Compile Include="Assets\Scripts\Classes\__Player.cs" />
+    <Compile Include="Assets\Scripts\Classes\__Ship__Module.cs" />
+    <Compile Include="Assets\Scripts\Handlers\__Game_Handler.cs" />
+    <Compile Include="Assets\Scripts\UI\__Console.cs" />
+    <Compile Include="Assets\Scripts\UI\__Tooltip.cs" />
+    <Compile Include="Assets\Scripts\Objects\_Tile.cs" />
+    <Compile Include="Assets\Scripts\Objects\_Particle.cs" />
     <None Include="Assets\Scripts\Notes.txt" />
     <None Include="Assets\Hierarchy Organizer\Hierarchy Organizer 3.txt" />
     <None Include="Assets\Shaders\Toony-Lighted.shader" />

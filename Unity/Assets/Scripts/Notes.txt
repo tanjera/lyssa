@@ -13,11 +13,15 @@
 
 ** TO DO NEXT **
 
+
+like now:
+make tiles spheres
+get a good particle texture
+add particles to tile being dragged
+make HUD...
+
 ... INTEGRATE OLD SIFR INTO LYSSA ...
-	-> Split Game.cs into different class scripts
 	-> Integrate audio handler
-	-> Scrap input handler
-	-> Scrap HUD
 
 ... MAKE HUD FOR NEW SIFR ...
 
