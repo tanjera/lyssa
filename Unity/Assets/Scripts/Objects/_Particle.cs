@@ -10,7 +10,7 @@ public class _Particle : MonoBehaviour {
 	}
 	
 	void Update () {
-        if (thisParticle && !thisParticle.IsAlive())
+        if (thisParticle && !thisParticle.IsAlive() && transform.parent == null)
             Destroy(thisParticle.gameObject);
 	}
 }

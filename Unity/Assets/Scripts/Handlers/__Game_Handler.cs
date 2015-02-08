@@ -423,12 +423,16 @@ public class __Game_Handler : MonoBehaviour {
     void Destroy_Tile(Cell incCell) {
         if (State__Minor == Game_States__Minor.Turn_Player__Dragging)
             Player.Ship.Energy_Add(incCell.Color);
-
-        /* USE THIS CODE TO ADD AN EXPLOSION PARTICLE WHEN A TILE IS DESTROYED
-        GameObject instParticles = (GameObject)GameObject.Instantiate(Prototype__Particles[incItem.Color.GetHashCode()]);
-        instParticles.transform.Translate(new Vector3(incItem.Object.transform.position.x, 0, incItem.Object.transform.position.y));
-        instParticles.SetActive(true);
-        */
+        
+        // Play a particle system depending on whether it is being dragged or not
+        _Tile findTile = incCell.Object.GetComponent<_Tile>();
+        if (incCell == Drag_Cell && findTile != null && findTile.Particle__On_Drag != null) {
+            findTile.Particle__On_Drag.transform.SetParent(null);
+            findTile.Particle__On_Drag.Play();
+        } else if (incCell != Drag_Cell && findTile != null && findTile.Particle__On_Destroy != null) {
+            findTile.Particle__On_Destroy.transform.SetParent(null);
+            findTile.Particle__On_Destroy.Play();
+        }
 
         GameObject.Destroy(incCell.Object);
         incCell.Object = null;
