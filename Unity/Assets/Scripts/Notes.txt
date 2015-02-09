@@ -19,44 +19,14 @@ add particles to tile being dragged
 
 
 *** TO MAKE PLAYABLE ***
-2) add ships
 4) get the stone logic -> HUD playable/usable
 
 
 
 
 ... major changes ... !!!!!
-	-> no more counting stones in a mana "count"- instead a max of 30 stones per color
-		e.g. skills requiring 15 stones now require "half" the color pool
-		instead of leveraging equations over mana counts, use the color pool as a multiplier (20/30 stones = 0.66)
-		... colors can be measured in a progress bar type of view
-	-> have SIX colors, three diametrically opposed pairs (called aspects, *not* mana)
-		yellow (ethereal) <-> purple (substance)
-		green (vitality) <-> black (demise)
-		red (strife) <-> white (serenity)
-	-> collecting stones: you can only collect the 3 primary colors of your character; each character has these defined
-		collecting a stone thats not your color subtracts from its opposite color!!!
-		aspect count UI bars csn be represented as a progress bar between the opposing colors, one bar per pair (total 3)
-		eg		[red icon]	:::::::::			[white icon]		halfway
-				[yellow]	::::::::::::::::::	[purple]			full
-				[green]		:					[black]				empty
-
-
-... skills!
-	-> tweak backend for actions/skills
-		1) funnel skills through triggering function to standardize Console_Output()
-			replace delegates with enums for funneling through one major function for processing
-			eg enum Skill_Type { Attack_Single, AoE, DoT, etc }
-			can have delegate return a double that offers the calculation for damage/healing to do
-	-> to Player
-		1) add Modifier class { enum Value_Modified, double Value_Multiplier, enum Permanence, double Permanence_Counter, enum Effect_Interval }
-			enum Value_Modified { HP, Aspect_Aggregation, Damage_Matrix }
-			enum Permanence { Turns, Matches, Hours, Permanent } for how long a modifier lasts
-			enum Effect_Interval { Every_Turn, On_Expiration, etc }
-		2) add List <Modifier> to hold buffs, DoTs, etc
-		3) add function Calculate_Stats that runs every turn to update character stats like damage matrix, resistencd matrix, etc
-		4) add function Process_Modifiers to tick the counter every turn
-		... also Equipment will be able to employ Modifiers to affect character stats
+	-> have SIX energy colors, three diametrically opposed pairs
+	-> collecting stones: you can only collect the 3 primary colors of your ship's energy grid
 
 
 

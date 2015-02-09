@@ -17,7 +17,5 @@ public class __Player {
     public __Player(string name, bool human) {
         Name = name;
         Human = human;
-
-        Ship = new __Ship("");
     }    
 }

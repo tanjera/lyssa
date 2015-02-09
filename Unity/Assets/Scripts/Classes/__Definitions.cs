@@ -5,7 +5,7 @@ public class __Definitions {
 
     public static string
         Program_Name = "Lyssa",
-        Program_Version = "0.15.0207";
+        Program_Version = "0.1.150207";
 
     public static string Layer__Interactive = "Interactive",
                             Layer__Mouseover = "Mouseover",
@@ -22,29 +22,24 @@ public class __Definitions {
     public static int __EP_Colors = 6;
 
     public enum EP_Colors {
-        Red,
-        White,
         Yellow,
-        Purple,
         Green,
-        Black
-    }
-
-    public enum EP_Colors__Opposites {
-        White,
-        Red,
+        Blue,
         Purple,
-        Yellow,
-        Black,
-        Green
+        Red,
+        White
     }
 
     public static Color[] EP_Colors__Lookup = new Color[] {
-        Color.red,
-        Color.white,
         Color.yellow,
-        Color.magenta,
         Color.green,
-        Color.black
+        Color.blue,
+        Color.magenta,
+        Color.red,
+        Color.white
     };
+
+    public static string 
+        Prefab__Tile = "Prefabs/Prototype__Tile_Energy",
+        Prefab__Ammo = "Particles/Ammo";
 }

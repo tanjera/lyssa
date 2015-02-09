@@ -50,7 +50,7 @@
     <Compile Include="Assets\Scripts\Classes\__Ship.cs" />
     <Compile Include="Assets\Scripts\Classes\__Definitions.cs" />
     <Compile Include="Assets\Scripts\Classes\__Player.cs" />
-    <Compile Include="Assets\Scripts\Classes\__Ship__Module.cs" />
+    <Compile Include="Assets\Scripts\Classes\__Ship__Modules.cs" />
     <Compile Include="Assets\Scripts\Handlers\__Game_Handler.cs" />
     <Compile Include="Assets\Scripts\UI\__Header.cs" />
     <Compile Include="Assets\Scripts\UI\__Console.cs" />

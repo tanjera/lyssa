@@ -4,30 +4,37 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class __Ship {
+public class __Ship : MonoBehaviour {
 
-    public string Name;
+    __Game_Handler _Game;
 
-    public double HP__Structure = 100,
-                    HP__Armor = 100,
-                    HP__Shield = 100,
+    [HideInInspector]
+    public __Ship Target;
 
-                    HP_Max__Structure = 100,
-                    HP_Max__Armor = 100,
-                    HP_Max__Shield = 100;
-
-    public double EP_Fraction = 0,
-                    EP_Increment = 0.1;
+    [HideInInspector]
+    public double HP__Hull, HP__Armor, HP__Shield,
+                    HP_Max__Hull, HP_Max__Armor, HP_Max__Shield,
+                    EP_Fraction = 0, EP_Increment = 0.1;
+    
+    [HideInInspector]
     public __Definitions.EP_Colors[] EP__Primaries = new __Definitions.EP_Colors[3];
 
-    public __Ship Target;
+    List<__Ship__Weapon> Modules__Weapons;
+    List<__Ship__Shield> Modules__Shield;
+    List<__Ship__Armor>  Modules__Armor;
+    List<__Ship__Hull>   Modules__Hull;
 
     public delegate void Stats_Changed__Handler(__Ship sender);
     public event Stats_Changed__Handler Stats_Changed;
 
 
-    public __Ship(string name) {
-        Name = name;
+    void Awake() {
+        _Game = GameObject.Find(__Definitions.Object__Game_Controller).GetComponent<__Game_Handler>();
+     
+        Modules__Weapons = new List<__Ship__Weapon>();
+        Modules__Shield = new List<__Ship__Shield>();
+        Modules__Armor = new List<__Ship__Armor>();
+        Modules__Hull = new List<__Ship__Hull>();
     }
 
     public void Energy_Add(__Definitions.EP_Colors incColor) {
@@ -44,14 +51,44 @@ public class __Ship {
                 ? 0 : EP_Fraction - EP_Increment;
     }
 
+    public void Module_Add(__Ship__Weapon incModule) {
+        Modules__Weapons.Add(incModule);
+    }
+    public void Module_Add(__Ship__Shield incModule) {
+        Modules__Shield.Add(incModule);
 
-    public void Attack__Basic() {
+        HP__Shield += incModule.HP;
+        HP_Max__Shield += incModule.HP_Max;
+    }
+    public void Module_Add(__Ship__Armor incModule) {
+        Modules__Armor.Add(incModule);
+
+        HP__Armor += incModule.HP;
+        HP_Max__Armor += incModule.HP_Max;
+    }
+    public void Module_Add(__Ship__Hull incModule) {
+        Modules__Hull.Add(incModule);
+
+        HP__Hull += incModule.HP;
+        HP_Max__Hull += incModule.HP_Max;
+    }
+
+    public void Attack() {
         if (Target == null)
             return;
 
-        Target.Damage(35, 1, 1, 1);
+        Modules__Weapons.ForEach( weapon => {
+            GameObject particleAmmo = Instantiate(Resources.Load<GameObject>(__Definitions.Prefab__Ammo)) as GameObject;
+            _Game.Move(particleAmmo.transform, Target.transform.position, 0.5f, true);
+
+            Target.Damage(weapon.Damage_Base,
+                weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Shield.GetHashCode()],
+                weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Armor.GetHashCode()],
+                weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Hull.GetHashCode()]);
+        });
     }
-    public void Damage(double rawDamage, double multShield, double multArmor, double multStructure) {
+
+    public void Damage(double rawDamage, double multShield, double multArmor, double multHull) {
         double buf;
 
         buf = rawDamage;
@@ -63,22 +100,21 @@ public class __Ship {
         HP__Armor = HP__Armor > (buf * multArmor) ? HP__Armor - (buf * multArmor) : 0;
 
         buf = rawDamage;
-        rawDamage = rawDamage > HP__Structure / multStructure ? rawDamage - (HP__Structure / multStructure) : 0;
-        HP__Structure = HP__Structure > (buf * multStructure) ? HP__Structure - (buf * multStructure) : 0;
+        rawDamage = rawDamage > HP__Hull / multHull ? rawDamage - (HP__Hull / multHull) : 0;
+        HP__Hull = HP__Hull > (buf * multHull) ? HP__Hull - (buf * multHull) : 0;
 
-        if (HP__Structure <= 0)
+        if (HP__Hull <= 0)
             Destroyed();
 
         if (Stats_Changed != null)
             Stats_Changed(this);
     }
-
     public void Destroyed() {
-        HP__Structure = 0;
+        HP__Hull = 0;
         HP__Armor = 0;
         HP__Shield = 0;
 
-        HP_Max__Structure = 0;
+        HP_Max__Hull = 0;
         HP_Max__Armor = 0;
         HP_Max__Shield = 0;
     }

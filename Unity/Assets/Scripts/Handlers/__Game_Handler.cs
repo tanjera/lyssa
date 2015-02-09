@@ -12,21 +12,55 @@ public class __Game_Handler : MonoBehaviour {
 
     public __Player Player,
         Enemy_1, Enemy_2, Enemy_3;
-
     public bool has_Enemy_1, has_Enemy_2, has_Enemy_3;
+
+    Game_States__Major State__Major;
+    Game_States__Minor State__Minor;
+    
+    Cell Drag_Cell;
+    Transform Drag_Joint;
+    float Drag_Depth,
+        Drag_Force = 1000,
+        Drag_Damping = 1;
+    Transform Drag_Transform;
+
+    Matrix Playing_Board = new Matrix();
+    Transform Playing_Board__Container;
+    Transform Playing_Board__Positions;
+
+    /* Things to be turned into prefabs then loaded programmatically... */
+    public GameObject UI_Paused;
+
+
+    enum Game_States__Major {
+        Initializing,
+        Paused,
+        Running
+    }
+    enum Game_States__Minor {
+        Null,
+        Turn_Player__Idle,
+        Turn_Player__Dragging,
+        Turn_Player__Attack,
+        Turn_Enemy1,
+        Turn_Enemy2,
+        Turn_Enemy3
+    }
+
+
+#region ROUTINES
 
     void Awake() {
         GameObject findBuffer;
 
         findBuffer = GameObject.Find(__Definitions.Object__Console);
-        if (findBuffer != null) 
+        if (findBuffer != null)
             Console = findBuffer.GetComponent<__Console>();
 
         findBuffer = GameObject.Find(__Definitions.Object__Tooltip);
         if (findBuffer != null)
             Tooltip = findBuffer.GetComponent<__Tooltip>();
     }
-
     void Start() {
 
         State__Major = Game_States__Major.Initializing;
@@ -46,39 +80,26 @@ public class __Game_Handler : MonoBehaviour {
         State__Major = Game_States__Major.Running;
         State__Minor = Game_States__Minor.Turn_Player__Idle;
 
+
         // HACK HACK HACK SETUP TEST STATES
-        Player.Ship.Target = Enemy_1.Ship;
+        // HACK HACK HACK SETUP TEST STATES
+        
+        Player.Ship = GameObject.Find("Ship, Omega Fighter").GetComponent<__Ship>();
+        Player.Ship.Module_Add(__Ship__Modules.Turret_Starter);
+        Player.Ship.Module_Add(__Ship__Modules.Turret_Starter);
+        Player.Ship.Module_Add(__Ship__Modules.Shield_Starter);
+        Player.Ship.Module_Add(__Ship__Modules.Armor_Starter);
+        Player.Ship.Module_Add(__Ship__Modules.Hull_Starter);
+        
+        Enemy_1.Ship = GameObject.Find("Ship, Vertex").GetComponent<__Ship>();
+        Enemy_1.Ship.Module_Add(__Ship__Modules.Turret_Starter);
+        Enemy_1.Ship.Module_Add(__Ship__Modules.Shield_Starter);
+        Enemy_1.Ship.Module_Add(__Ship__Modules.Armor_Starter);
+        Enemy_1.Ship.Module_Add(__Ship__Modules.Hull_Starter);
 
         Enemy_1.Ship.Target = Player.Ship;
+        Player.Ship.Target = Enemy_1.Ship;
     }
-
-    enum Game_States__Major {
-        Initializing,
-        Paused,
-        Running
-    }
-    enum Game_States__Minor {
-        Null,
-        Turn_Player__Idle,
-        Turn_Player__Dragging,
-        Turn_Player__Attack,
-        Turn_Enemy1,
-        Turn_Enemy2,
-        Turn_Enemy3
-    }
-
-    Game_States__Major State__Major;
-    Game_States__Minor State__Minor;
-
-    Cell Drag_Cell;
-    Transform Drag_Joint;
-    float Drag_Depth,
-        Drag_Force = 1000,
-        Drag_Damping = 1;
-
-    public GameObject UI_Paused;
-
-
     void FixedUpdate() {
         Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
     }
@@ -174,25 +195,25 @@ public class __Game_Handler : MonoBehaviour {
 
             case Game_States__Minor.Turn_Player__Attack:
                 if (Player != null)
-                    Player.Ship.Attack__Basic();
+                    Player.Ship.Attack();
                 Change_State(Game_States__Minor.Turn_Enemy1);
                 return;
 
             case Game_States__Minor.Turn_Enemy1:
                 if (has_Enemy_1)
-                    Enemy_1.Ship.Attack__Basic();
+                    Enemy_1.Ship.Attack();
                 Change_State(Game_States__Minor.Turn_Enemy2);
                 return;
 
             case Game_States__Minor.Turn_Enemy2:
                 if (has_Enemy_2)
-                    Enemy_2.Ship.Attack__Basic();
+                    Enemy_2.Ship.Attack();
                 Change_State(Game_States__Minor.Turn_Enemy3);
                 return;
 
             case Game_States__Minor.Turn_Enemy3:
                 if (has_Enemy_3)
-                    Enemy_3.Ship.Attack__Basic();
+                    Enemy_3.Ship.Attack();
                 Change_State(Game_States__Minor.Turn_Player__Idle);
                 return;
         }
@@ -219,6 +240,8 @@ public class __Game_Handler : MonoBehaviour {
         return obj.transform;
     }
 
+#endregion
+
 
 #region 3D TRANSFORMATIONS
 
@@ -234,15 +257,19 @@ public class __Game_Handler : MonoBehaviour {
         Transform Transform;
         Vector3 Target,
             Velocity;
+        bool thenDestroy = false;
 
-        public Transformation(Operations incOperation, Transform incTransform, Vector3 incTarget, float incTime) {
+        public Transformation(Operations incOperation, Transform incTransform, Vector3 incTarget, float incTime, bool incDestroy = false) {
             Operation = incOperation;
             Transform = incTransform;
             Target = incTarget;
             Time = incTime;
+            thenDestroy = incDestroy;
         }
 
-        public void Modify(Vector3 incTarget, float incTime) {
+        public void Modify(Vector3 incTarget, float incTime, bool incDestroy = false) {
+            thenDestroy = incDestroy;
+
             if (Target == incTarget && Time == incTime)
                 return;
 
@@ -263,10 +290,18 @@ public class __Game_Handler : MonoBehaviour {
         }
         bool Move() {
             Transform.position = Vector3.SmoothDamp(Transform.position, Target, ref Velocity, Time);
+            
+            if (thenDestroy && Transform.position == Target)
+                Destroy(Transform.gameObject);
+
             return Transform.position == Target;
         }
         bool Scale() {
             Transform.localScale = Vector3.SmoothDamp(Transform.localScale, Target, ref Velocity, Time);
+
+            if (thenDestroy && Transform.position == Target)
+                Destroy(Transform.gameObject);
+            
             return Transform.localScale == Target;
         }
         bool Clamp_Rotation() {
@@ -281,24 +316,26 @@ public class __Game_Handler : MonoBehaviour {
         public Transform _Transform { get { return Transform; } }
         public Operations _Operation { get { return Operation; } }
     }
+
     List<Transformation> Transformation_Buffer = new List<Transformation>();
 
-    public void Move(Transform incTransform, Vector3 incTarget, float incTime) 
-        { Operate(Transformation.Operations.Move, incTransform, incTarget, incTime); }
-    public void Scale (Transform incTransform, Vector3 incTarget, float incTime) 
-        { Operate(Transformation.Operations.Scale, incTransform, incTarget, incTime); }
-    void Operate(Transformation.Operations incOperation, Transform incTransform, Vector3 incTarget, float incTime) {
+    public void Move(Transform incTransform, Vector3 incTarget, float incTime, bool incDestroy = false) { 
+        Operate(Transformation.Operations.Move, incTransform, incTarget, incTime, incDestroy); 
+    }
+    public void Scale(Transform incTransform, Vector3 incTarget, float incTime, bool incDestroy = false) {
+        Operate(Transformation.Operations.Scale, incTransform, incTarget, incTime, incDestroy); 
+    }
+    void Operate(Transformation.Operations incOperation, Transform incTransform, Vector3 incTarget, float incTime, bool incDestroy = false) {
         if (Transformation_Buffer.Find(obj => obj._Operation == incOperation && obj._Transform == incTransform) == null)
-            Transformation_Buffer.Add(new Transformation(incOperation, incTransform, incTarget, incTime));
+            Transformation_Buffer.Add(new Transformation(incOperation, incTransform, incTarget, incTime, incDestroy));
         else
-            Transformation_Buffer.Find(obj => obj._Operation == incOperation && obj._Transform == incTransform).Modify(incTarget, incTime);
+            Transformation_Buffer.Find(obj => obj._Operation == incOperation && obj._Transform == incTransform).Modify(incTarget, incTime, incDestroy);
     }
 
 #endregion
 
 
-
-#region PLAYING BOARD & MANA BOARDS
+#region PLAYING BOARD
 
     public class Cell {
         public int X, Y;
@@ -317,7 +354,6 @@ public class __Game_Handler : MonoBehaviour {
             get { return Object == null ? false : Object.activeSelf; }
             set { if (Object != null) Object.SetActive(value); }
         }
-
         public Vector2 Coords {
             get { return new Vector2(X, Y); }
         }
@@ -343,15 +379,7 @@ public class __Game_Handler : MonoBehaviour {
             });
             return listBuffer;
         }
-    }   
-    
-    Matrix Playing_Board = new Matrix();
-    Transform Playing_Board__Container;
-    Transform Playing_Board__Positions;
-
-    public GameObject Prototype__Tile;
-
-    Transform Item_Dragging;
+    }
 
     void Build__Playing_Board() {
         // Run through all __Item_Positions...
@@ -367,10 +395,9 @@ public class __Game_Handler : MonoBehaviour {
             Playing_Board.Cells.Add(newCell);
         }
     }
-    
     void Populate__Playing_Board() {
         Playing_Board.Cells.ForEach(obj => {
-            Create_Tile(ref obj, Prototype__Tile,
+            Create_Tile(ref obj, Resources.Load<GameObject>(__Definitions.Prefab__Tile),
                 (__Definitions.EP_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(__Definitions.EP_Colors)).Length),
                 Playing_Board__Container, true, true);
             obj.Object.name = __Definitions.Label_Tile;
@@ -379,7 +406,7 @@ public class __Game_Handler : MonoBehaviour {
     void Refresh__Playing_Board() {
         Playing_Board.Cells.ForEach(obj => {
             if (obj.Empty) {
-                Create_Tile(ref obj, Prototype__Tile,
+                Create_Tile(ref obj, Resources.Load<GameObject>(__Definitions.Prefab__Tile),
                     (__Definitions.EP_Colors)UnityEngine.Random.Range(0, Enum.GetNames(typeof(__Definitions.EP_Colors)).Length),
                     Playing_Board__Container, true, true);
                 obj.Object.name = __Definitions.Label_Tile;
@@ -387,8 +414,7 @@ public class __Game_Handler : MonoBehaviour {
         });
     }
     void Iterate_Down__Playing_Board() {
-        /*
-         * bool isComplete = false;
+        /* bool isComplete = false;
         while (!isComplete) {
             isComplete = true;
             Playing_Board.Cells.ForEach(obj => {
@@ -402,35 +428,29 @@ public class __Game_Handler : MonoBehaviour {
                     }
                 }
             });
-        }
-         * */
+        }*/
     }
-
-
+    
     void Collide_Tile(GameObject sender, GameObject incCollided) {
-        // 1. check to see if the item collided with is the one being dragged...
-        // 2. if not, then destroy the item collided with...
-        // 3. and add to mana pool
         if (incCollided != Drag_Cell.Object && incCollided.layer == LayerMask.NameToLayer(__Definitions.Layer__Interactive))
-            Destroy_Tile(incCollided);
-    }
-    void Destroy_Tile(GameObject incObject) {
-        Playing_Board.Cells.ForEach(obj => {
-            if (obj.Object != null && obj.Object == incObject)
-                Destroy_Tile(obj);
-        });
+            Playing_Board.Cells.ForEach(obj => {
+                if (obj.Object != null && obj.Object == incCollided)
+                    Destroy_Tile(obj);
+            });
     }
     void Destroy_Tile(Cell incCell) {
         if (State__Minor == Game_States__Minor.Turn_Player__Dragging)
             Player.Ship.Energy_Add(incCell.Color);
-        
+
         // Play a particle system depending on whether it is being dragged or not
         _Tile findTile = incCell.Object.GetComponent<_Tile>();
         if (incCell == Drag_Cell && findTile != null && findTile.Particle__On_Drag != null) {
             findTile.Particle__On_Drag.transform.SetParent(null);
             findTile.Particle__On_Drag.Play();
-        } else if (incCell != Drag_Cell && findTile != null && findTile.Particle__On_Destroy != null) {
+        }
+        else if (incCell != Drag_Cell && findTile != null && findTile.Particle__On_Destroy != null) {
             findTile.Particle__On_Destroy.transform.SetParent(null);
+            findTile.Particle__On_Destroy.particleSystem.startColor = __Definitions.EP_Colors__Lookup[incCell.Color.GetHashCode()];
             findTile.Particle__On_Destroy.Play();
         }
 
@@ -444,17 +464,16 @@ public class __Game_Handler : MonoBehaviour {
         incCell.Color = incColor;
         if (incCell.Object.renderer.material != null)
             incCell.Object.renderer.material.color = __Definitions.EP_Colors__Lookup[incColor.GetHashCode()];
-        
+
         if (attachCollision)
             incCell.Object.GetComponent<_Tile>().Tile_Collision += new _Tile.Tile_Collision_Handler(Collide_Tile);
 
         incCell.Object.transform.Translate(incCell.Location.position);
-        
+
         if (setActive)
             incCell.Object.SetActive(true);
     }
 
-
- #endregion
+#endregion
 
 }
