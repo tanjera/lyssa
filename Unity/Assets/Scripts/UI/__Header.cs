@@ -7,19 +7,37 @@ public class __Header : MonoBehaviour {
 
     __Game_Handler _Game;
 
-    public Text Player__Info,
+    public RectTransform 
                 Player__HP_Shield,
                 Player__HP_Armor,
                 Player__HP_Hull,
                 Player__EP,
                 
-                Enemy__Info,
                 Enemy__HP_Shield,
                 Enemy__HP_Armor,
                 Enemy__HP_Hull;
 
+    Vector2 
+                Player__HP_Shield__Original,
+                Player__HP_Armor__Original,
+                Player__HP_Hull__Original,
+                Player__EP__Original,
+
+                Enemy__HP_Shield__Original,
+                Enemy__HP_Armor__Original,
+                Enemy__HP_Hull__Original;
+
     void Awake() {
         _Game = GameObject.Find(__Definitions.Object__Game_Controller).GetComponent<__Game_Handler>();
+
+        Player__HP_Shield__Original = Player__HP_Shield.sizeDelta;
+        Player__HP_Armor__Original = Player__HP_Armor.sizeDelta;
+        Player__HP_Hull__Original = Player__HP_Hull.sizeDelta;
+        Player__EP__Original = Player__EP.sizeDelta;
+
+        Enemy__HP_Shield__Original = Enemy__HP_Shield.sizeDelta;
+        Enemy__HP_Armor__Original = Enemy__HP_Armor.sizeDelta;
+        Enemy__HP_Hull__Original = Enemy__HP_Hull.sizeDelta;
     }
 
     void Start() {
@@ -27,18 +45,16 @@ public class __Header : MonoBehaviour {
 
     void Update() {
         if (_Game.Player.Ship != null) {
-            Player__Info.text = _Game.Player.Name;
-            Player__HP_Shield.text = String.Format("{0} / {1}", _Game.Player.Ship.HP__Shield, _Game.Player.Ship.HP_Max__Shield);
-            Player__HP_Armor.text = String.Format("{0} / {1}", _Game.Player.Ship.HP__Armor, _Game.Player.Ship.HP_Max__Armor);
-            Player__HP_Hull.text = String.Format("{0} / {1}", _Game.Player.Ship.HP__Hull, _Game.Player.Ship.HP_Max__Hull);
-            Player__EP.text = String.Format("{0}", _Game.Player.Ship.EP_Fraction);
+            Player__HP_Shield.sizeDelta = new Vector2(Player__HP_Shield__Original.x * (float)(_Game.Player.Ship.HP__Shield / _Game.Player.Ship.HP_Max__Shield), Player__HP_Shield__Original.y);
+            Player__HP_Armor.sizeDelta = new Vector2(Player__HP_Armor__Original.x * (float)(_Game.Player.Ship.HP__Armor / _Game.Player.Ship.HP_Max__Armor), Player__HP_Armor__Original.y);
+            Player__HP_Hull.sizeDelta = new Vector2(Player__HP_Hull__Original.x * (float)(_Game.Player.Ship.HP__Hull / _Game.Player.Ship.HP_Max__Hull), Player__HP_Hull__Original.y);
+            Player__EP.sizeDelta = new Vector2(Player__HP_Shield__Original.x * (float)_Game.Player.Ship.EP_Fraction, Player__HP_Shield__Original.y);
         }
 
         if (_Game.Enemy_1.Ship != null) {
-            Enemy__Info.text = _Game.Enemy_1.Name;
-            Enemy__HP_Shield.text = String.Format("{0} / {1}", _Game.Enemy_1.Ship.HP__Shield, _Game.Enemy_1.Ship.HP_Max__Shield);
-            Enemy__HP_Armor.text = String.Format("{0} / {1}", _Game.Enemy_1.Ship.HP__Armor, _Game.Enemy_1.Ship.HP_Max__Armor);
-            Enemy__HP_Hull.text = String.Format("{0} / {1}", _Game.Enemy_1.Ship.HP__Hull, _Game.Enemy_1.Ship.HP_Max__Hull);
+            Enemy__HP_Shield.sizeDelta = new Vector2(Enemy__HP_Shield__Original.x * (float)(_Game.Enemy_1.Ship.HP__Shield / _Game.Enemy_1.Ship.HP_Max__Shield), Enemy__HP_Shield__Original.y);
+            Enemy__HP_Armor.sizeDelta = new Vector2(Enemy__HP_Armor__Original.x * (float)(_Game.Enemy_1.Ship.HP__Armor / _Game.Enemy_1.Ship.HP_Max__Armor), Enemy__HP_Armor__Original.y);
+            Enemy__HP_Hull.sizeDelta = new Vector2(Enemy__HP_Hull__Original.x * (float)(_Game.Enemy_1.Ship.HP__Hull / _Game.Enemy_1.Ship.HP_Max__Hull), Enemy__HP_Hull__Original.y);
         }
     }
 }

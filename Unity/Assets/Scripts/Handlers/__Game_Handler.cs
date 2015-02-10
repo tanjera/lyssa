@@ -7,8 +7,9 @@ using System.Collections.Generic;
 
 public class __Game_Handler : MonoBehaviour {
 
-    __Tooltip Tooltip;
-    __Console Console;
+    __Tooltip _Tooltip;
+    __Console _Console;
+    __Header _Header;
 
     public __Player Player,
         Enemy_1, Enemy_2, Enemy_3;
@@ -51,15 +52,17 @@ public class __Game_Handler : MonoBehaviour {
 #region ROUTINES
 
     void Awake() {
+        _Header = GameObject.Find(__Definitions.Object__Game_Header).GetComponent<__Header>();
+        
         GameObject findBuffer;
-
+        
         findBuffer = GameObject.Find(__Definitions.Object__Console);
         if (findBuffer != null)
-            Console = findBuffer.GetComponent<__Console>();
+            _Console = findBuffer.GetComponent<__Console>();
 
         findBuffer = GameObject.Find(__Definitions.Object__Tooltip);
         if (findBuffer != null)
-            Tooltip = findBuffer.GetComponent<__Tooltip>();
+            _Tooltip = findBuffer.GetComponent<__Tooltip>();
     }
     void Start() {
 
@@ -104,10 +107,10 @@ public class __Game_Handler : MonoBehaviour {
         Transformation_Buffer.ForEach(obj => { if (obj.Process()) Transformation_Buffer.Remove(obj); });
     }
     void Update() {
-        
+
         /* Developer console functions */
-        if (Input.GetKeyDown(KeyCode.BackQuote) && Console != null)
-            Console.Toggle();
+        if (Input.GetKeyDown(KeyCode.BackQuote) && _Console != null)
+            _Console.Toggle();
         
         /* Main game routine */
         switch (State__Major) {
@@ -130,12 +133,12 @@ public class __Game_Handler : MonoBehaviour {
                 Physics.Raycast(updateRay, out updateHit);
 
                 /* Mouseover tooltips */
-                if (updateHit.transform != null && Tooltip != null
+                if (updateHit.transform != null && _Tooltip != null
                     && (updateHit.transform.gameObject.layer == LayerMask.NameToLayer(__Definitions.Layer__Mouseover)
                         || updateHit.transform.gameObject.layer == LayerMask.NameToLayer(__Definitions.Layer__Interactive)))
-                    Tooltip.Process(updateHit.transform);
-                else if (Tooltip != null)
-                    Tooltip.Process(null);
+                    _Tooltip.Process(updateHit.transform);
+                else if (_Tooltip != null)
+                    _Tooltip.Process(null);
 
                 /* Player's turn, drag stones, activate skills */
                 if (State__Minor == Game_States__Minor.Turn_Player__Idle) {
