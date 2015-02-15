@@ -7,45 +7,27 @@
 	probably d/t configjoint -> fixedjoint with stone dragging, fixedjoint
 	may "rip" stone through the colliders...
 
+2)	Iterate_Down__Playing_Board() is broken...	
+	... to fix Iterate_Down__Playing_Board(), iterate **from the top** and not from the bottom!!
+
+
 
 
 ** TO DO NEXT **
 
 
-add particles to tile being dragged
-
-... INTEGRATE OLD SIFR INTO LYSSA ...
-	-> Integrate audio handler
-
-
-*** TO MAKE PLAYABLE ***
-4) get the stone logic -> HUD playable/usable
+1) reinstate the energy gathering logic (primary colors gains energy, other colors loses energy)
+3) Improve the ammo/missile prefab
+	1. Maybe add a missile model?
+	2. A better particle engine... maybe a fireball type of thing with a little smoke?
+	
 
 
 
 
-... major changes ... !!!!!
-	-> have SIX energy colors, three diametrically opposed pairs
-	-> collecting stones: you can only collect the 3 primary colors of your ship's energy grid
 
 
 
-... bug solution!
-	-> to fix Iterate_Down__Playing_Board(), iterate **from the top** and not from the bottom!!
 
 
 
-... do more programmatically
-	-> load Prototypes with Resources.Load()... will need to make all meshes into Prefabs
-		programmatically create character GameObjects (pre-programmed in lookup tables, Instantiate() on run...)
-		... will require creating Transforms for spawn points
-		... will need to standardize origins on character meshes
-		
-
-
-... remember/learn how to switch scenes in-game...
-
-
-... once playable ...
-	-> add currency
-	-> add a store for modules

@@ -88,6 +88,10 @@ public class __Game_Handler : MonoBehaviour {
         // HACK HACK HACK SETUP TEST STATES
         
         Player.Ship = GameObject.Find("Ship, Omega Fighter").GetComponent<__Ship>();
+        Player.Ship.EP__Primaries = new __Definitions.EP_Colors[] 
+            { __Definitions.EP_Colors.Blue, 
+                __Definitions.EP_Colors.Green, 
+                __Definitions.EP_Colors.Yellow };
         Player.Ship.Module_Add(__Ship__Modules.Turret_Starter);
         Player.Ship.Module_Add(__Ship__Modules.Turret_Starter);
         Player.Ship.Module_Add(__Ship__Modules.Shield_Starter);
@@ -443,7 +447,7 @@ public class __Game_Handler : MonoBehaviour {
     }
     void Destroy_Tile(Cell incCell) {
         if (State__Minor == Game_States__Minor.Turn_Player__Dragging)
-            Player.Ship.Energy_Add(incCell.Color);
+            Player.Ship.Energy_Process(incCell.Color, Drag_Cell.Color);
 
         // Play a particle system depending on whether it is being dragged or not
         _Tile findTile = incCell.Object.GetComponent<_Tile>();

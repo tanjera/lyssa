@@ -17,6 +17,10 @@ public class __Header : MonoBehaviour {
                 Enemy__HP_Armor,
                 Enemy__HP_Hull;
 
+    public Image Player__Color1,
+                 Player__Color2,
+                 Player__Color3;
+
     Vector2 
                 Player__HP_Shield__Original,
                 Player__HP_Armor__Original,
@@ -40,15 +44,16 @@ public class __Header : MonoBehaviour {
         Enemy__HP_Hull__Original = Enemy__HP_Hull.sizeDelta;
     }
 
-    void Start() {
-    }
-
-    void Update() {
+    void FixedUpdate() {
         if (_Game.Player.Ship != null) {
             Player__HP_Shield.sizeDelta = new Vector2(Player__HP_Shield__Original.x * (float)(_Game.Player.Ship.HP__Shield / _Game.Player.Ship.HP_Max__Shield), Player__HP_Shield__Original.y);
             Player__HP_Armor.sizeDelta = new Vector2(Player__HP_Armor__Original.x * (float)(_Game.Player.Ship.HP__Armor / _Game.Player.Ship.HP_Max__Armor), Player__HP_Armor__Original.y);
             Player__HP_Hull.sizeDelta = new Vector2(Player__HP_Hull__Original.x * (float)(_Game.Player.Ship.HP__Hull / _Game.Player.Ship.HP_Max__Hull), Player__HP_Hull__Original.y);
-            Player__EP.sizeDelta = new Vector2(Player__HP_Shield__Original.x * (float)_Game.Player.Ship.EP_Fraction, Player__HP_Shield__Original.y);
+            Player__EP.sizeDelta = new Vector2(Player__EP__Original.x * (float)(_Game.Player.Ship.EP_Percent / 100), Player__EP__Original.y);
+
+            Player__Color1.color = __Definitions.EP_Colors__Lookup[_Game.Player.Ship.EP__Primaries[0].GetHashCode()];
+            Player__Color2.color = __Definitions.EP_Colors__Lookup[_Game.Player.Ship.EP__Primaries[1].GetHashCode()];
+            Player__Color3.color = __Definitions.EP_Colors__Lookup[_Game.Player.Ship.EP__Primaries[2].GetHashCode()];
         }
 
         if (_Game.Enemy_1.Ship != null) {

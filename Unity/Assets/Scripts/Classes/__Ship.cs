@@ -14,7 +14,7 @@ public class __Ship : MonoBehaviour {
     [HideInInspector]
     public double HP__Hull, HP__Armor, HP__Shield,
                     HP_Max__Hull, HP_Max__Armor, HP_Max__Shield,
-                    EP_Fraction = 0, EP_Increment = 0.1;
+                    EP_Percent = 0, EP_Increment = 1;
     
     [HideInInspector]
     public __Definitions.EP_Colors[] EP__Primaries = new __Definitions.EP_Colors[3];
@@ -27,7 +27,6 @@ public class __Ship : MonoBehaviour {
     public delegate void Stats_Changed__Handler(__Ship sender);
     public event Stats_Changed__Handler Stats_Changed;
 
-
     void Awake() {
         _Game = GameObject.Find(__Definitions.Object__Game_Controller).GetComponent<__Game_Handler>();
      
@@ -37,18 +36,18 @@ public class __Ship : MonoBehaviour {
         Modules__Hull = new List<__Ship__Hull>();
     }
 
-    public void Energy_Add(__Definitions.EP_Colors incColor) {
+    public void Energy_Process(__Definitions.EP_Colors incColor, __Definitions.EP_Colors incDragging) {
         bool isPrimary = false;
         foreach (__Definitions.EP_Colors eachColor in EP__Primaries)
             if (incColor == eachColor)
                 isPrimary = true;
 
-        if (isPrimary)
-            EP_Fraction = EP_Fraction + EP_Increment >= 1.0
-                ? 1 : EP_Fraction + EP_Increment;
-        else
-            EP_Fraction = EP_Fraction - EP_Increment <= 0
-                ? 0 : EP_Fraction - EP_Increment;
+        if (isPrimary && incColor == incDragging)
+            EP_Percent = EP_Percent + 1 > 100 
+                ? 100 : EP_Percent + 1;
+        else 
+            EP_Percent = EP_Percent - 1 < 0
+                ? 0 : EP_Percent - 1;
     }
 
     public void Module_Add(__Ship__Weapon incModule) {
