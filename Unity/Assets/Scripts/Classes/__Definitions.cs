@@ -9,6 +9,7 @@ public class __Definitions {
 
     public static string Layer__Interactive = "Interactive",
                             Layer__Mouseover = "Mouseover",
+                            Layer__Animations = "Animations",
                             
                             Object__Game_Controller = "_Game Controller",
                             Object__Console = "UI__Console",

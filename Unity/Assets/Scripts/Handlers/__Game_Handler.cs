@@ -87,18 +87,20 @@ public class __Game_Handler : MonoBehaviour {
         // HACK HACK HACK SETUP TEST STATES
         // HACK HACK HACK SETUP TEST STATES
         
+        
         Player.Ship = GameObject.Find("Ship, Omega Fighter").GetComponent<__Ship>();
+        Player.Ship.Player = Player;
         Player.Ship.EP__Primaries = new __Definitions.EP_Colors[] 
             { __Definitions.EP_Colors.Blue, 
                 __Definitions.EP_Colors.Green, 
                 __Definitions.EP_Colors.Yellow };
-        Player.Ship.Module_Add(__Ship__Modules.Turret_Starter);
         Player.Ship.Module_Add(__Ship__Modules.Turret_Starter);
         Player.Ship.Module_Add(__Ship__Modules.Shield_Starter);
         Player.Ship.Module_Add(__Ship__Modules.Armor_Starter);
         Player.Ship.Module_Add(__Ship__Modules.Hull_Starter);
         
         Enemy_1.Ship = GameObject.Find("Ship, Vertex").GetComponent<__Ship>();
+        Enemy_1.Ship.Player = Enemy_1;
         Enemy_1.Ship.Module_Add(__Ship__Modules.Turret_Starter);
         Enemy_1.Ship.Module_Add(__Ship__Modules.Shield_Starter);
         Enemy_1.Ship.Module_Add(__Ship__Modules.Armor_Starter);

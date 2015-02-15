@@ -64,27 +64,46 @@ public class __Console : MonoBehaviour {
                 Output("... input not recognized :(");
                 return;
 
+
             case "set":
                 __Player incPlayer;   // Which player are we setting values for?
-                if (incCommand[1].Length >= 2) return;
+                
+                if (incCommand.Length == 1) { Set_Help(); return; }
+
                 switch (incCommand[1].Trim()) {
-                    default: return;
-                    case "help":
-                        Output("set [player/enemy1/enemy2/enemy3] [field] [value] [values] \nfields: NONE temp hack");
-                        return;
+                    default:
+                    case "help": Set_Help(); return;
                     case "player": incPlayer = _Game.Player; break;
                     case "enemy1": incPlayer = _Game.Enemy_1; break;
                     case "enemy2": incPlayer = _Game.Enemy_2; break;
                     case "enemy3": incPlayer = _Game.Enemy_3; break;
                 }
 
+                if (incCommand.Length < 3) { Set_Help(); return; }
+                switch (incCommand[2].Trim()) {
+                    default: return;
+                    case "ep":
+                        int incAmount = int.Parse(incCommand[3]);
+                        if (incAmount < 0 || incAmount > 100)
+                            incAmount = incAmount < 0 ? 0 : 100;
+                        incPlayer.Ship.EP_Percent = incAmount;
+                        Output(String.Format("{0}'s energy points set to {1}%", incPlayer.Name, incAmount));
+                    return;
+                }
+
                 return;
+
+
             case "clear":
                 Log.text = "";
                 return;
         }
 
         Output("... input error, unable to process :'(");
+    }
+
+    void Set_Help() {
+        Output("set [player/enemy1/enemy2/enemy3] [field] [value] [values] \nfields: ep");
     }
 
     void Output(string incOutput) {

@@ -10,11 +10,11 @@ public class __Ship : MonoBehaviour {
 
     [HideInInspector]
     public __Ship Target;
-
+    public __Player Player;
     [HideInInspector]
     public double HP__Hull, HP__Armor, HP__Shield,
                     HP_Max__Hull, HP_Max__Armor, HP_Max__Shield,
-                    EP_Percent = 0, EP_Increment = 1;
+                    EP_Percent = 0, EP_Increment = 1, EP_Buffer = 0;
     
     [HideInInspector]
     public __Definitions.EP_Colors[] EP__Primaries = new __Definitions.EP_Colors[3];
@@ -37,17 +37,23 @@ public class __Ship : MonoBehaviour {
     }
 
     public void Energy_Process(__Definitions.EP_Colors incColor, __Definitions.EP_Colors incDragging) {
-        bool isPrimary = false;
+        bool incPrimary = false;
         foreach (__Definitions.EP_Colors eachColor in EP__Primaries)
             if (incColor == eachColor)
-                isPrimary = true;
+                incPrimary = true;
 
-        if (isPrimary && incColor == incDragging)
-            EP_Percent = EP_Percent + 1 > 100 
+        // Collects only the primary color being dragged
+        if (incPrimary && incColor == incDragging)
+            EP_Percent = EP_Percent + 1 > 100
                 ? 100 : EP_Percent + 1;
-        else 
+        // Subtracts only when dragging a non-primary color and hitting other colors
+        else if (!incPrimary && incColor != incDragging)
             EP_Percent = EP_Percent - 1 < 0
                 ? 0 : EP_Percent - 1;
+
+        // EP Buffer used in calculating attack strength: if you collected the same color you're dragging, add
+        if (incColor == incDragging)
+            EP_Buffer += 1;
     }
 
     public void Module_Add(__Ship__Weapon incModule) {
@@ -76,15 +82,20 @@ public class __Ship : MonoBehaviour {
         if (Target == null)
             return;
 
+        if (!Player.Human)
+            EP_Buffer = UnityEngine.Random.Range(1, 10);
+
         Modules__Weapons.ForEach( weapon => {
             GameObject particleAmmo = Instantiate(Resources.Load<GameObject>(__Definitions.Prefab__Ammo)) as GameObject;
             _Game.Move(particleAmmo.transform, Target.transform.position, 0.5f, true);
 
-            Target.Damage(weapon.Damage_Base,
+            Target.Damage(Math.Pow(weapon.Damage_Base, Math.Sqrt(EP_Buffer)),
                 weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Shield.GetHashCode()],
                 weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Armor.GetHashCode()],
                 weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Hull.GetHashCode()]);
         });
+        Debug.Log(EP_Buffer);
+        EP_Buffer = 0;
     }
 
     public void Damage(double rawDamage, double multShield, double multArmor, double multHull) {

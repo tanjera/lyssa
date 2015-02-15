@@ -21,8 +21,8 @@ using System.Collections;
 public class __Ship__Weapon {
     public string Name;
 
-    public double Damage_Base;
-    public double[] Damage_Modifier = new double[3];
+    public float Damage_Base;
+    public float[] Damage_Modifier = new float[3];
 
     public double HP, HP_Max;
 
@@ -32,7 +32,7 @@ public class __Ship__Weapon {
         Hull
     }
 
-    public __Ship__Weapon(string name, double dmgBase, double[] dmgMods) {
+    public __Ship__Weapon(string name, float dmgBase, float[] dmgMods) {
         Name = name;
         Damage_Base = dmgBase;
         Damage_Modifier = dmgMods;
@@ -79,7 +79,7 @@ public class __Ship__Hull {
 public class __Ship__Modules {
     
     public static __Ship__Weapon
-        Turret_Starter = new __Ship__Weapon( "Starter Light Turret", 5, new double[] { 0.75, 1, 1 } );
+        Turret_Starter = new __Ship__Weapon("Starter Light Turret", 2f, new float[] { 0.75f, 1, 1 });
 
     public static __Ship__Shield
         Shield_Starter = new __Ship__Shield( "Starter Shield Booster", 30 );
@@ -88,6 +88,6 @@ public class __Ship__Modules {
         Armor_Starter = new __Ship__Armor("Starter Armor Plating", 10);
 
     public static __Ship__Hull
-        Hull_Starter = new __Ship__Hull("Starter Hull Reinforcement", 10);
+        Hull_Starter = new __Ship__Hull("Starter Hull Reinforcement", 20);
 
 }

@@ -15,12 +15,15 @@
 
 ** TO DO NEXT **
 
+1) Improve the ammo/missile prefab
+	1. Maybe make it a laser fire for now?
+2) Add colliders to ships!!
+	1. Shield collider (+ mesh?): Spherical, allows ammo to hit shield when shield is up
+	2. Mesh collider: dumb down vertices for mesh collider
+	-> Put them on Layer__Animations
+3) Decals!!
+	1. For laser/missile impacts!!
 
-1) reinstate the energy gathering logic (primary colors gains energy, other colors loses energy)
-3) Improve the ammo/missile prefab
-	1. Maybe add a missile model?
-	2. A better particle engine... maybe a fireball type of thing with a little smoke?
-	
 
 
 
