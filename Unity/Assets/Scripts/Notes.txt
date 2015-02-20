@@ -15,6 +15,9 @@
 
 ** TO DO NEXT **
 
+*) Start working on scene for galactic map
+   ... with planets in a solar system that can be selected to initiate each level
+
 1) Improve the ammo/missile prefab
 	1. Maybe make it a laser fire for now?
 2) Add colliders to ships!!

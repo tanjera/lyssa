@@ -133,18 +133,20 @@ public class __Game_Handler : MonoBehaviour {
                 if (Input.GetKeyDown(KeyCode.Escape))
                     Change_State(Game_States__Major.Paused);
                 
-                /* Throw a raycast for processing... mouseover tooltip? drag a stone? activate a special power? */
+                /* Throw a raycast for processing... drag a tile? activate a special power? */
                 Ray updateRay = Camera.main.ScreenPointToRay(Input.mousePosition);
                 RaycastHit updateHit;
-                Physics.Raycast(updateRay, out updateHit);
+                Physics.Raycast(updateRay, out updateHit, 1000f, LayerMask.GetMask(__Definitions.Layer__Interactive));
 
                 /* Mouseover tooltips */
+                /* Disabled for development strictly on touchpads/phones
                 if (updateHit.transform != null && _Tooltip != null
                     && (updateHit.transform.gameObject.layer == LayerMask.NameToLayer(__Definitions.Layer__Mouseover)
                         || updateHit.transform.gameObject.layer == LayerMask.NameToLayer(__Definitions.Layer__Interactive)))
                     _Tooltip.Process(updateHit.transform);
                 else if (_Tooltip != null)
                     _Tooltip.Process(null);
+                 */
 
                 /* Player's turn, drag stones, activate skills */
                 if (State__Minor == Game_States__Minor.Turn_Player__Idle) {
@@ -258,11 +260,13 @@ public class __Game_Handler : MonoBehaviour {
         public enum Operations {
             Move,
             Scale,
-            Clamp_Rotation
+            Clamp_Rotation,
+
+            Fade
         }
 
         Operations Operation;
-        float Time;
+        float Time, Time_Original;
         Transform Transform;
         Vector3 Target,
             Velocity;
@@ -320,6 +324,18 @@ public class __Game_Handler : MonoBehaviour {
             tempAngles.z = tempAngles.z < 180 ? Mathf.Clamp(tempAngles.z, 0, Target.z) : Mathf.Clamp(tempAngles.z, 360 - Target.z, 360);
             Transform.localEulerAngles = tempAngles;
             return false;
+        }
+        bool Fade() {
+            /*
+            // Will use Target.x as original alpha, Target.y as target alpha
+            if (Transform.renderer != null) {
+                Color bufColor = Transform.renderer.material.color;
+                CANNOT DIVIDE BY ZERO: bufColor.a = Mathf.Lerp(Target.x, Target.y, Time_Original / Time);
+                Transform.renderer.material.color = bufColor;
+                return bufColor.a == Target.y;
+            }
+            */
+            return true;
         }
 
         public Transform _Transform { get { return Transform; } }
@@ -439,7 +455,13 @@ public class __Game_Handler : MonoBehaviour {
             });
         }*/
     }
-    
+
+    void Hide__Playing_Board() {
+        Playing_Board.Cells.ForEach(obj => {
+            obj.Object.SetActive(false);
+        });
+    }
+
     void Collide_Tile(GameObject sender, GameObject incCollided) {
         if (incCollided != Drag_Cell.Object && incCollided.layer == LayerMask.NameToLayer(__Definitions.Layer__Interactive))
             Playing_Board.Cells.ForEach(obj => {

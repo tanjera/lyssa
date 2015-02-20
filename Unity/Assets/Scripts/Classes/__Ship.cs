@@ -87,6 +87,9 @@ public class __Ship : MonoBehaviour {
 
         Modules__Weapons.ForEach( weapon => {
             GameObject particleAmmo = Instantiate(Resources.Load<GameObject>(__Definitions.Prefab__Ammo)) as GameObject;
+            particleAmmo.SetActive(false);
+            particleAmmo.transform.position = this.transform.position;
+            particleAmmo.SetActive(true);
             _Game.Move(particleAmmo.transform, Target.transform.position, 0.5f, true);
 
             Target.Damage(Math.Pow(weapon.Damage_Base, Math.Sqrt(EP_Buffer)),
@@ -94,7 +97,7 @@ public class __Ship : MonoBehaviour {
                 weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Armor.GetHashCode()],
                 weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Hull.GetHashCode()]);
         });
-        Debug.Log(EP_Buffer);
+
         EP_Buffer = 0;
     }
 

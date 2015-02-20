@@ -8,8 +8,8 @@ public class __Definitions {
         Program_Version = "0.1.150207";
 
     public static string Layer__Interactive = "Interactive",
+                            Layer__Kinematic = "Kinematic",
                             Layer__Mouseover = "Mouseover",
-                            Layer__Animations = "Animations",
                             
                             Object__Game_Controller = "_Game Controller",
                             Object__Console = "UI__Console",
@@ -43,5 +43,5 @@ public class __Definitions {
 
     public static string 
         Prefab__Tile = "Prefabs/Prototype__Tile_Energy",
-        Prefab__Ammo = "Particles/Ammo";
+        Prefab__Ammo = "Prefabs/Ammo";
 }
