@@ -14,11 +14,11 @@ public class __Console : MonoBehaviour {
                 Version;
 
     void Awake() {
-        _Game = GameObject.Find(__Definitions.Object__Game_Controller).GetComponent<__Game_Handler>();
+        _Game = GameObject.Find(__Definitions.Object_gameController).GetComponent<__Game_Handler>();
     }
 
     void Start() {
-        Version.text = String.Format("{0} v{1}", __Definitions.Program_Name.ToLower(), __Definitions.Program_Version.ToLower());
+        Version.text = String.Format("{0} v{1}", __Definitions.programName.ToLower(), __Definitions.programVersion.ToLower());
     }
 
     void Update() {
@@ -51,6 +51,9 @@ public class __Console : MonoBehaviour {
     public void Toggle() {
         Active = !Active;
         Panel.SetActive(Active);
+
+        if (Active)
+            TouchScreenKeyboard.Open("");
     }
 
     void Parse(string incString) {
@@ -74,9 +77,9 @@ public class __Console : MonoBehaviour {
                     default:
                     case "help": Set_Help(); return;
                     case "player": incPlayer = _Game.Player; break;
-                    case "enemy1": incPlayer = _Game.Enemy_1; break;
-                    case "enemy2": incPlayer = _Game.Enemy_2; break;
-                    case "enemy3": incPlayer = _Game.Enemy_3; break;
+                    case "enemy1": incPlayer = _Game.Enemy1; break;
+                    case "enemy2": incPlayer = _Game.Enemy2; break;
+                    case "enemy3": incPlayer = _Game.Enemy3; break;
                 }
 
                 if (incCommand.Length < 3) { Set_Help(); return; }
@@ -86,7 +89,7 @@ public class __Console : MonoBehaviour {
                         int incAmount = int.Parse(incCommand[3]);
                         if (incAmount < 0 || incAmount > 100)
                             incAmount = incAmount < 0 ? 0 : 100;
-                        incPlayer.Ship.EP_Percent = incAmount;
+                        incPlayer.Ship.epPercent = incAmount;
                         Output(String.Format("{0}'s energy points set to {1}%", incPlayer.Name, incAmount));
                     return;
                 }

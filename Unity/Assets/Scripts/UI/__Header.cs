@@ -8,58 +8,58 @@ public class __Header : MonoBehaviour {
     __Game_Handler _Game;
 
     public RectTransform 
-                Player__HP_Shield,
-                Player__HP_Armor,
-                Player__HP_Hull,
-                Player__EP,
+                Player__hpShield,
+                Player__hpArmor,
+                Player__hpHull,
+                Player__ep,
                 
-                Enemy__HP_Shield,
-                Enemy__HP_Armor,
-                Enemy__HP_Hull;
+                Enemy__hpShield,
+                Enemy__hpArmor,
+                Enemy__hpHull;
 
     public Image Player__Color1,
                  Player__Color2,
                  Player__Color3;
 
     Vector2 
-                Player__HP_Shield__Original,
-                Player__HP_Armor__Original,
-                Player__HP_Hull__Original,
-                Player__EP__Original,
+                Player__hpShield_Original,
+                Player__hpArmor_Original,
+                Player__hpHull_Original,
+                Player__EP_Original,
 
-                Enemy__HP_Shield__Original,
-                Enemy__HP_Armor__Original,
-                Enemy__HP_Hull__Original;
+                Enemy__hpShield_Original,
+                Enemy__hpArmor_Original,
+                Enemy__hpHull_Original;
 
     void Awake() {
-        _Game = GameObject.Find(__Definitions.Object__Game_Controller).GetComponent<__Game_Handler>();
+        _Game = GameObject.Find(__Definitions.Object_gameController).GetComponent<__Game_Handler>();
 
-        Player__HP_Shield__Original = Player__HP_Shield.sizeDelta;
-        Player__HP_Armor__Original = Player__HP_Armor.sizeDelta;
-        Player__HP_Hull__Original = Player__HP_Hull.sizeDelta;
-        Player__EP__Original = Player__EP.sizeDelta;
+        Player__hpShield_Original = Player__hpShield.sizeDelta;
+        Player__hpArmor_Original = Player__hpArmor.sizeDelta;
+        Player__hpHull_Original = Player__hpHull.sizeDelta;
+        Player__EP_Original = Player__ep.sizeDelta;
 
-        Enemy__HP_Shield__Original = Enemy__HP_Shield.sizeDelta;
-        Enemy__HP_Armor__Original = Enemy__HP_Armor.sizeDelta;
-        Enemy__HP_Hull__Original = Enemy__HP_Hull.sizeDelta;
+        Enemy__hpShield_Original = Enemy__hpShield.sizeDelta;
+        Enemy__hpArmor_Original = Enemy__hpArmor.sizeDelta;
+        Enemy__hpHull_Original = Enemy__hpHull.sizeDelta;
     }
 
     void FixedUpdate() {
-        if (_Game.Player.Ship != null) {
-            Player__HP_Shield.sizeDelta = new Vector2(Player__HP_Shield__Original.x * (float)(_Game.Player.Ship.HP__Shield / _Game.Player.Ship.HP_Max__Shield), Player__HP_Shield__Original.y);
-            Player__HP_Armor.sizeDelta = new Vector2(Player__HP_Armor__Original.x * (float)(_Game.Player.Ship.HP__Armor / _Game.Player.Ship.HP_Max__Armor), Player__HP_Armor__Original.y);
-            Player__HP_Hull.sizeDelta = new Vector2(Player__HP_Hull__Original.x * (float)(_Game.Player.Ship.HP__Hull / _Game.Player.Ship.HP_Max__Hull), Player__HP_Hull__Original.y);
-            Player__EP.sizeDelta = new Vector2(Player__EP__Original.x * (float)(_Game.Player.Ship.EP_Percent / 100), Player__EP__Original.y);
+        if (_Game.Player.Ship) {
+            Player__hpShield.sizeDelta = new Vector2(Player__hpShield_Original.x * (float)(_Game.Player.Ship.hpShield / _Game.Player.Ship.hpShield_Max), Player__hpShield_Original.y);
+            Player__hpArmor.sizeDelta = new Vector2(Player__hpArmor_Original.x * (float)(_Game.Player.Ship.hpArmor / _Game.Player.Ship.hpArmor_Max), Player__hpArmor_Original.y);
+            Player__hpHull.sizeDelta = new Vector2(Player__hpHull_Original.x * (float)(_Game.Player.Ship.hpHull / _Game.Player.Ship.hpHull_Max), Player__hpHull_Original.y);
+            Player__ep.sizeDelta = new Vector2(Player__EP_Original.x * (float)(_Game.Player.Ship.epPercent / 100), Player__EP_Original.y);
 
-            Player__Color1.color = __Definitions.EP_Colors__Lookup[_Game.Player.Ship.EP__Primaries[0].GetHashCode()];
-            Player__Color2.color = __Definitions.EP_Colors__Lookup[_Game.Player.Ship.EP__Primaries[1].GetHashCode()];
-            Player__Color3.color = __Definitions.EP_Colors__Lookup[_Game.Player.Ship.EP__Primaries[2].GetHashCode()];
+            Player__Color1.color = __Definitions.epColors_Lookup[_Game.Player.Ship.epPrimaries[0].GetHashCode()];
+            Player__Color2.color = __Definitions.epColors_Lookup[_Game.Player.Ship.epPrimaries[1].GetHashCode()];
+            Player__Color3.color = __Definitions.epColors_Lookup[_Game.Player.Ship.epPrimaries[2].GetHashCode()];
         }
 
-        if (_Game.Enemy_1.Ship != null) {
-            Enemy__HP_Shield.sizeDelta = new Vector2(Enemy__HP_Shield__Original.x * (float)(_Game.Enemy_1.Ship.HP__Shield / _Game.Enemy_1.Ship.HP_Max__Shield), Enemy__HP_Shield__Original.y);
-            Enemy__HP_Armor.sizeDelta = new Vector2(Enemy__HP_Armor__Original.x * (float)(_Game.Enemy_1.Ship.HP__Armor / _Game.Enemy_1.Ship.HP_Max__Armor), Enemy__HP_Armor__Original.y);
-            Enemy__HP_Hull.sizeDelta = new Vector2(Enemy__HP_Hull__Original.x * (float)(_Game.Enemy_1.Ship.HP__Hull / _Game.Enemy_1.Ship.HP_Max__Hull), Enemy__HP_Hull__Original.y);
+        if (_Game.Enemy1.Ship) {
+            Enemy__hpShield.sizeDelta = new Vector2(Enemy__hpShield_Original.x * (float)(_Game.Enemy1.Ship.hpShield / _Game.Enemy1.Ship.hpShield_Max), Enemy__hpShield_Original.y);
+            Enemy__hpArmor.sizeDelta = new Vector2(Enemy__hpArmor_Original.x * (float)(_Game.Enemy1.Ship.hpArmor / _Game.Enemy1.Ship.hpArmor_Max), Enemy__hpArmor_Original.y);
+            Enemy__hpHull.sizeDelta = new Vector2(Enemy__hpHull_Original.x * (float)(_Game.Enemy1.Ship.hpHull / _Game.Enemy1.Ship.hpHull_Max), Enemy__hpHull_Original.y);
         }
     }
 }

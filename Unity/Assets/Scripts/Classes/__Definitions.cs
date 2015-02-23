@@ -4,26 +4,26 @@ using UnityEngine;
 public class __Definitions {
 
     public static string
-        Program_Name = "Lyssa",
-        Program_Version = "0.1.150207";
+        programName = "Lyssa",
+        programVersion = "0.1.150207";
 
-    public static string Layer__Interactive = "Interactive",
-                            Layer__Kinematic = "Kinematic",
-                            Layer__Mouseover = "Mouseover",
+    public static string layerInteractive = "Interactive",
+                            layerKinematic = "Kinematic",
+                            layerMouseover = "Mouseover",
                             
-                            Object__Game_Controller = "_Game Controller",
-                            Object__Console = "UI__Console",
-                            Object__Tooltip = "UI__Tooltip",
-                            Object__Game_Header = "UI__Game_Header",
+                            Object_gameController = "_Game Controller",
+                            Object_Console = "UI__Console",
+                            Object_Tooltip = "UI__Tooltip",
+                            Object_gameHeader = "UI__Game_Header",
 
-                            Object__Playing_Board__Container = "Playing_Board__Item_Container",
-                            Object__Playing_Board__Positions = "Playing_Board__Item_Positions",
+                            Object_playingBoard_Container = "Playing_Board__Item_Container",
+                            Object_playingBoard_Positions = "Playing_Board__Item_Positions",
 
-                            Label_Tile = "Tile__Playing_Board";
+                            labelTile = "Tile__Playing_Board";
 
-    public static int __EP_Colors = 6;
+    public static int epColors_Count = 6;
 
-    public enum EP_Colors {
+    public enum epColors {
         Yellow,
         Green,
         Blue,
@@ -32,7 +32,7 @@ public class __Definitions {
         White
     }
 
-    public static Color[] EP_Colors__Lookup = new Color[] {
+    public static Color[] epColors_Lookup = new Color[] {
         Color.yellow,
         Color.green,
         Color.blue,
@@ -42,6 +42,6 @@ public class __Definitions {
     };
 
     public static string 
-        Prefab__Tile = "Prefabs/Prototype__Tile_Energy",
-        Prefab__Ammo = "Prefabs/Ammo";
+        prefabTile = "Prefabs/Prototype__Tile_Energy",
+        prefabAmmo = "Prefabs/Ammo";
 }

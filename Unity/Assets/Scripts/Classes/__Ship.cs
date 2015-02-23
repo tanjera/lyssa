@@ -8,74 +8,76 @@ public class __Ship : MonoBehaviour {
 
     __Game_Handler _Game;
 
+    public BezierSpline splineFlightPath;
+
     [HideInInspector]
     public __Ship Target;
     public __Player Player;
     [HideInInspector]
-    public double HP__Hull, HP__Armor, HP__Shield,
-                    HP_Max__Hull, HP_Max__Armor, HP_Max__Shield,
-                    EP_Percent = 0, EP_Increment = 1, EP_Buffer = 0;
+    public double hpHull, hpArmor, hpShield,
+                    hpHull_Max, hpArmor_Max, hpShield_Max,
+                    epPercent = 0, epIncrement = 1, epBuffer = 0;
     
     [HideInInspector]
-    public __Definitions.EP_Colors[] EP__Primaries = new __Definitions.EP_Colors[3];
+    public __Definitions.epColors[] epPrimaries = new __Definitions.epColors[3];
 
-    List<__Ship__Weapon> Modules__Weapons;
-    List<__Ship__Shield> Modules__Shield;
-    List<__Ship__Armor>  Modules__Armor;
-    List<__Ship__Hull>   Modules__Hull;
+    List<_shipWeapon> modulesWeapons;
+    List<_shipShield> modulesShield;
+    List<_shipArmor>  modulesArmor;
+    List<_shipHull>   modulesHull;
 
-    public delegate void Stats_Changed__Handler(__Ship sender);
-    public event Stats_Changed__Handler Stats_Changed;
+    public delegate void statsChanged_Handler(__Ship sender);
+    public event statsChanged_Handler statsChanged;
 
     void Awake() {
-        _Game = GameObject.Find(__Definitions.Object__Game_Controller).GetComponent<__Game_Handler>();
+        _Game = GameObject.Find(__Definitions.Object_gameController).GetComponent<__Game_Handler>();
      
-        Modules__Weapons = new List<__Ship__Weapon>();
-        Modules__Shield = new List<__Ship__Shield>();
-        Modules__Armor = new List<__Ship__Armor>();
-        Modules__Hull = new List<__Ship__Hull>();
+        modulesWeapons = new List<_shipWeapon>();
+        modulesShield = new List<_shipShield>();
+        modulesArmor = new List<_shipArmor>();
+        modulesHull = new List<_shipHull>();
     }
 
-    public void Energy_Process(__Definitions.EP_Colors incColor, __Definitions.EP_Colors incDragging) {
+    public void Energy_Process(__Definitions.epColors incColor, __Definitions.epColors incDragging) {
         bool incPrimary = false;
-        foreach (__Definitions.EP_Colors eachColor in EP__Primaries)
+        foreach (__Definitions.epColors eachColor in epPrimaries)
             if (incColor == eachColor)
                 incPrimary = true;
 
         // Collects only the primary color being dragged
         if (incPrimary && incColor == incDragging)
-            EP_Percent = EP_Percent + 1 > 100
-                ? 100 : EP_Percent + 1;
+            epPercent = epPercent + 1 > 100
+                ? 100 : epPercent + 1;
         // Subtracts only when dragging a non-primary color and hitting other colors
         else if (!incPrimary && incColor != incDragging)
-            EP_Percent = EP_Percent - 1 < 0
-                ? 0 : EP_Percent - 1;
+            epPercent = epPercent - 1 < 0
+                ? 0 : epPercent - 1;
 
         // EP Buffer used in calculating attack strength: if you collected the same color you're dragging, add
         if (incColor == incDragging)
-            EP_Buffer += 1;
+            epBuffer += 1;
     }
 
-    public void Module_Add(__Ship__Weapon incModule) {
-        Modules__Weapons.Add(incModule);
+    public void moduleAdd(_shipWeapon incModule) {
+        modulesWeapons.Add(incModule);
     }
-    public void Module_Add(__Ship__Shield incModule) {
-        Modules__Shield.Add(incModule);
+    public void moduleAdd(_shipShield incModule) {
+        modulesShield.Add(incModule);
 
-        HP__Shield += incModule.HP;
-        HP_Max__Shield += incModule.HP_Max;
+        hpShield += incModule.HP;
+        hpShield_Max += incModule.HP_Max;
     }
-    public void Module_Add(__Ship__Armor incModule) {
-        Modules__Armor.Add(incModule);
+    public void moduleAdd(_shipArmor incModule) {
+        modulesArmor.Add(incModule);
 
-        HP__Armor += incModule.HP;
-        HP_Max__Armor += incModule.HP_Max;
+        hpArmor += incModule.HP;
+        hpArmor_Max += incModule.HP_Max;
     }
-    public void Module_Add(__Ship__Hull incModule) {
-        Modules__Hull.Add(incModule);
+    public void moduleAdd(_shipHull incModule) {
+        modulesHull.Add(incModule);
 
-        HP__Hull += incModule.HP;
-        HP_Max__Hull += incModule.HP_Max;
+        hpHull += incModule.HP;
+        hpHull_Max += incModule.HP_Max;
     }
 
     public void Attack() {
@@ -83,52 +85,55 @@ public class __Ship : MonoBehaviour {
             return;
 
         if (!Player.Human)
-            EP_Buffer = UnityEngine.Random.Range(1, 10);
+            epBuffer = UnityEngine.Random.Range(1, 10);
 
-        Modules__Weapons.ForEach( weapon => {
-            GameObject particleAmmo = Instantiate(Resources.Load<GameObject>(__Definitions.Prefab__Ammo)) as GameObject;
+        modulesWeapons.ForEach( weapon => {
+            GameObject particleAmmo = Instantiate(Resources.Load<GameObject>(__Definitions.prefabAmmo)) as GameObject;
             particleAmmo.SetActive(false);
             particleAmmo.transform.position = this.transform.position;
             particleAmmo.SetActive(true);
-            _Game.Move(particleAmmo.transform, Target.transform.position, 0.5f, true);
 
-            Target.Damage(Math.Pow(weapon.Damage_Base, Math.Sqrt(EP_Buffer)),
-                weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Shield.GetHashCode()],
-                weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Armor.GetHashCode()],
-                weapon.Damage_Modifier[__Ship__Weapon.Damage_Modifier__Index.Hull.GetHashCode()]);
+            __Game_Handler.kinemaOp kinemaAmmo = new __Game_Handler.kinemaOp(particleAmmo.transform, Target.transform, 1f);
+            kinemaAmmo.onComplete = delegate() { Destroy(kinemaAmmo.transObject.gameObject); };
+            _Game.kinemaAdd(kinemaAmmo);
+
+            Target.Damage(Math.Pow(weapon.damageBase, Math.Sqrt(epBuffer)),
+                weapon.damageModifier[_shipWeapon.damageModifier_Index.Shield.GetHashCode()],
+                weapon.damageModifier[_shipWeapon.damageModifier_Index.Armor.GetHashCode()],
+                weapon.damageModifier[_shipWeapon.damageModifier_Index.Hull.GetHashCode()]);
         });
 
-        EP_Buffer = 0;
+        epBuffer = 0;
     }
 
     public void Damage(double rawDamage, double multShield, double multArmor, double multHull) {
         double buf;
 
         buf = rawDamage;
-        rawDamage = rawDamage > HP__Shield / multShield ? rawDamage - (HP__Shield / multShield) : 0;
-        HP__Shield = HP__Shield > (buf * multShield) ? HP__Shield - (buf * multShield) : 0;
+        rawDamage = rawDamage > hpShield / multShield ? rawDamage - (hpShield / multShield) : 0;
+        hpShield = hpShield > (buf * multShield) ? hpShield - (buf * multShield) : 0;
 
         buf = rawDamage;
-        rawDamage = rawDamage > HP__Armor / multArmor ? rawDamage - (HP__Armor / multArmor) : 0;
-        HP__Armor = HP__Armor > (buf * multArmor) ? HP__Armor - (buf * multArmor) : 0;
+        rawDamage = rawDamage > hpArmor / multArmor ? rawDamage - (hpArmor / multArmor) : 0;
+        hpArmor = hpArmor > (buf * multArmor) ? hpArmor - (buf * multArmor) : 0;
 
         buf = rawDamage;
-        rawDamage = rawDamage > HP__Hull / multHull ? rawDamage - (HP__Hull / multHull) : 0;
-        HP__Hull = HP__Hull > (buf * multHull) ? HP__Hull - (buf * multHull) : 0;
+        rawDamage = rawDamage > hpHull / multHull ? rawDamage - (hpHull / multHull) : 0;
+        hpHull = hpHull > (buf * multHull) ? hpHull - (buf * multHull) : 0;
 
-        if (HP__Hull <= 0)
+        if (hpHull <= 0)
             Destroyed();
 
-        if (Stats_Changed != null)
-            Stats_Changed(this);
+        if (statsChanged != null)
+            statsChanged(this);
     }
     public void Destroyed() {
-        HP__Hull = 0;
-        HP__Armor = 0;
-        HP__Shield = 0;
+        hpHull = 0;
+        hpArmor = 0;
+        hpShield = 0;
 
-        HP_Max__Hull = 0;
-        HP_Max__Armor = 0;
-        HP_Max__Shield = 0;
+        hpHull_Max = 0;
+        hpArmor_Max = 0;
+        hpShield_Max = 0;
     }
 }
