@@ -5,7 +5,7 @@ public class __Definitions {
 
     public static string
         programName = "Lyssa",
-        programVersion = "0.1.150207";
+        programVersion = "0.1.250207";
 
     public static string layerInteractive = "Interactive",
                             layerKinematic = "Kinematic",
@@ -18,6 +18,8 @@ public class __Definitions {
 
                             Object_playingBoard_Container = "Playing_Board__Item_Container",
                             Object_playingBoard_Positions = "Playing_Board__Item_Positions",
+
+                            Object_shipShield = "Shield, Collider",
 
                             labelTile = "Tile__Playing_Board";
 

@@ -38,7 +38,7 @@ public class __Ship : MonoBehaviour {
         modulesHull = new List<_shipHull>();
     }
 
-    public void Energy_Process(__Definitions.epColors incColor, __Definitions.epColors incDragging) {
+    public void energyProcess(__Definitions.epColors incColor, __Definitions.epColors incDragging) {
         bool incPrimary = false;
         foreach (__Definitions.epColors eachColor in epPrimaries)
             if (incColor == eachColor)
@@ -80,6 +80,10 @@ public class __Ship : MonoBehaviour {
         hpHull_Max += incModule.HP_Max;
     }
 
+    public bool shieldsActive() {
+        return hpShield > 0;
+    }
+
     public void Attack() {
         if (Target == null)
             return;
@@ -88,15 +92,21 @@ public class __Ship : MonoBehaviour {
             epBuffer = UnityEngine.Random.Range(1, 10);
 
         modulesWeapons.ForEach( weapon => {
-            GameObject particleAmmo = Instantiate(Resources.Load<GameObject>(__Definitions.prefabAmmo)) as GameObject;
-            particleAmmo.SetActive(false);
-            particleAmmo.transform.position = this.transform.position;
-            particleAmmo.SetActive(true);
+            /* Create ammunition */
+            GameObject ammoObject = Instantiate(Resources.Load<GameObject>(__Definitions.prefabAmmo)) as GameObject;
+            _Ammo ammoScript = ammoObject.GetComponent<_Ammo>();
+            ammoScript.Target(Target);
+            
+            
+            /* Ammunition kinematic operations*/
+            ammoObject.SetActive(false);
+            ammoObject.transform.position = this.transform.position;
+            ammoObject.SetActive(true);
+            ammoScript.kinemaOp = new __Game_Handler.kinemaOp(ammoObject.transform, Target.transform, 1f);
+            ammoScript.kinemaOp.onComplete = delegate() { Destroy(ammoScript.kinemaOp.transObject.gameObject); };
+            _Game.kinemaAdd(ammoScript.kinemaOp);
 
-            __Game_Handler.kinemaOp kinemaAmmo = new __Game_Handler.kinemaOp(particleAmmo.transform, Target.transform, 1f);
-            kinemaAmmo.onComplete = delegate() { Destroy(kinemaAmmo.transObject.gameObject); };
-            _Game.kinemaAdd(kinemaAmmo);
-
+            /* Damage the target! */
             Target.Damage(Math.Pow(weapon.damageBase, Math.Sqrt(epBuffer)),
                 weapon.damageModifier[_shipWeapon.damageModifier_Index.Shield.GetHashCode()],
                 weapon.damageModifier[_shipWeapon.damageModifier_Index.Armor.GetHashCode()],
@@ -105,7 +115,6 @@ public class __Ship : MonoBehaviour {
 
         epBuffer = 0;
     }
-
     public void Damage(double rawDamage, double multShield, double multArmor, double multHull) {
         double buf;
 

@@ -20,7 +20,7 @@ using System.Collections;
 
 public class _shipWeapon {
     public string Name;
-
+    public bool Active;
     public float damageBase;
     public float[] damageModifier = new float[3];
 
@@ -34,6 +34,7 @@ public class _shipWeapon {
 
     public _shipWeapon(string name, float dmgBase, float[] dmgMods) {
         Name = name;
+        Active = true;
         damageBase = dmgBase;
         damageModifier = dmgMods;
     }
@@ -42,10 +43,12 @@ public class _shipWeapon {
 
 public class _shipShield {
     public string Name;
+    public bool Active;
     public double HP, HP_Max;
 
     public _shipShield(string name, double hp) {
         Name = name;
+        Active = true;
         HP = hp;
         HP_Max = hp;
     }
@@ -54,10 +57,12 @@ public class _shipShield {
 
 public class _shipArmor {
     public string Name;
+    public bool Active;
     public double HP, HP_Max;
 
     public _shipArmor(string name, double hp) {
-        Name = name;
+        Name = name; 
+        Active = true;
         HP = hp;
         HP_Max = hp;
     }
@@ -66,10 +71,12 @@ public class _shipArmor {
 
 public class _shipHull {
     public string Name;
+    public bool Active;
     public double HP, HP_Max;
 
     public _shipHull(string name, double hp) {
         Name = name;
+        Active = true;
         HP = hp;
         HP_Max = hp;
     }

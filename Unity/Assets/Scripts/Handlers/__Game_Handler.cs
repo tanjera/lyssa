@@ -123,13 +123,8 @@ public class __Game_Handler : MonoBehaviour {
         Player.Ship.Target = Enemy1.Ship;
     }
     void Update() {
-
-
         kinemaProcess();            /* Process the kinema buffer */
         waitProcess();              /* Process the wait buffer */
-
-        if (Input.GetKeyDown(KeyCode.Space))
-            playingBoard_FadeOut(0.5f);
 
         /* Developer console functions */
         if (Input.GetKeyDown(KeyCode.BackQuote) && _Console)
@@ -316,6 +311,7 @@ public class __Game_Handler : MonoBehaviour {
     public class kinemaOp {
         public enum Operations {
             Fade,
+            Light_Flash,
             Move,
             Move_Follow,
             Move_Spline,
@@ -329,12 +325,15 @@ public class __Game_Handler : MonoBehaviour {
         public bool splineLookForward;
         public Vector3 vectTarget, vectOriginal;
         public Color colorTarget, colorOriginal;
+        public float intensityTarget, intensityOriginal,
+                        rangeTarget, rangeOriginal;
         /* Can subscribe to the completion event and/or add a function to be run when completed... */
         public delegate void eventComplete_Handler();
         public event eventComplete_Handler eventComplete;
         public eventComplete_Handler onComplete;
 
         public kinemaOp (Transform incTransform, Color incTarget, float incTime) {
+            /* Fade */
             if (!incTransform.renderer)
                 return;
             
@@ -345,7 +344,24 @@ public class __Game_Handler : MonoBehaviour {
             timeTotal = incTime;
             timeCurrent = incTime;
         }
+        public kinemaOp(Transform incTransform, Color incColor, float incRange, float incIntensity, float incTime) {
+            /* Light_Flash */
+            if (!incTransform.light)
+                return;
+
+            Operation = Operations.Light_Flash;
+            transObject = incTransform;
+            colorOriginal = incTransform.light.color;
+            colorTarget = incColor;
+            rangeOriginal = incTransform.light.range;
+            rangeTarget = incRange;
+            intensityOriginal = incTransform.light.intensity;
+            intensityTarget = incIntensity;
+            timeTotal = incTime;
+            timeCurrent = incTime;
+        }
         public kinemaOp(Operations incOperation, Transform incTransform, Vector3 incTarget, float incTime) {
+            /* Move & Scale */
             if (incOperation != Operations.Move && incOperation != Operations.Scale)
                 return;
 
@@ -362,6 +378,7 @@ public class __Game_Handler : MonoBehaviour {
             timeCurrent = incTime;
         }
         public kinemaOp(Transform incTransform, Transform incTarget, float incTime) {
+            /* Move_Follow */
             Operation = Operations.Move_Follow;
             transObject = incTransform;
             vectOriginal = incTransform.position;
@@ -370,6 +387,7 @@ public class __Game_Handler : MonoBehaviour {
             timeCurrent = incTime;
         }
         public kinemaOp(Transform incTransform, BezierSpline incSpline, float incTime, bool incLookForward = true) {
+            /* Move_Spline */
             Operation = Operations.Move_Spline;
             transObject = incTransform;
 
@@ -391,6 +409,9 @@ public class __Game_Handler : MonoBehaviour {
     public void kinemaAdd(kinemaOp incOperation) {
         if (kinemaBuffer.Find(obj => obj.Operation == incOperation.Operation && obj.transObject == incOperation.transObject) == null)
             kinemaBuffer.Add(incOperation);
+    }
+    public void kinemaRemove(kinemaOp.Operations incOperation, Transform incTransform) {
+        kinemaBuffer.RemoveAll(obj => obj.Operation == incOperation && obj.transObject == incTransform);
     }
     void kinemaProcess() {
         kinemaBuffer.ForEach(eachKin => {
@@ -427,10 +448,25 @@ public class __Game_Handler : MonoBehaviour {
                         eachKin.transObject.renderer.material.color = bufColor;
                     }
                     break;
+
+                case kinemaOp.Operations.Light_Flash:
+                    if (eachKin.transObject.light) {
+                        
+                        if (eachKin.timeCurrent > (eachKin.timeTotal / 2)) { // First half, flash
+                            eachKin.transObject.light.range = Mathf.Lerp(eachKin.rangeOriginal, eachKin.rangeTarget, (1 - (eachKin.timeCurrent / eachKin.timeTotal)) * 2);
+                            eachKin.transObject.light.intensity = Mathf.Lerp(eachKin.intensityOriginal, eachKin.intensityTarget, (1 - (eachKin.timeCurrent / eachKin.timeTotal)) * 2);
+                            eachKin.transObject.light.color = Color.Lerp(eachKin.colorOriginal, eachKin.colorTarget, (1 - (eachKin.timeCurrent / eachKin.timeTotal)) * 2);
+                        } else {                                            // Second half, fade
+                            eachKin.transObject.light.range = Mathf.Lerp(eachKin.rangeOriginal, eachKin.rangeTarget, (eachKin.timeCurrent / eachKin.timeTotal) * 2);
+                            eachKin.transObject.light.intensity = Mathf.Lerp(eachKin.intensityOriginal, eachKin.intensityTarget, (eachKin.timeCurrent / eachKin.timeTotal) * 2);
+                            eachKin.transObject.light.color = Color.Lerp(eachKin.colorOriginal, eachKin.colorTarget, (eachKin.timeCurrent / eachKin.timeTotal) * 2);
+                        }
+                    }
+                    break;
             }
 
             eachKin.timeCurrent -= gameTime_Delta;
-            if (eachKin.timeCurrent <= 0) {
+            if (eachKin.timeCurrent < 0) {
                 eachKin.Complete();
                 kinemaBuffer.Remove(eachKin);
                 return;
@@ -597,7 +633,7 @@ public class __Game_Handler : MonoBehaviour {
     }
     void tileDestroy(Cell incCell) {
         if (stateMinor == gameStates_Minor.Turn_Player__Dragging)
-            Player.Ship.Energy_Process(incCell.Color, dragCell.Color);
+            Player.Ship.energyProcess(incCell.Color, dragCell.Color);
 
         // Play a particle system depending on whether it is being dragged or not
         _Tile findTile = incCell.Object.GetComponent<_Tile>();

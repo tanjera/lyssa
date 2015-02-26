@@ -54,7 +54,7 @@
      <Compile Include="Assets\Scripts\Classes\__Ship__Modules.cs" />
      <Compile Include="Assets\Scripts\Handlers\__Aspect_Ratio.cs" />
      <Compile Include="Assets\Scripts\Handlers\__Game_Handler.cs" />
-     <Compile Include="Assets\Scripts\Objects\_Particle.cs" />
+     <Compile Include="Assets\Scripts\Objects\_Ammo.cs" />
      <Compile Include="Assets\Scripts\Objects\_Tile.cs" />
      <Compile Include="Assets\Scripts\Splines\Bezier.cs" />
      <Compile Include="Assets\Scripts\Splines\BezierCurve.cs" />

@@ -3,13 +3,16 @@
 
 
 ** BUGS **
-1) stones can be dragged outside the board when applied with lots of force; 
+1) tiles can be dragged outside the board when applied with lots of force; 
 	probably d/t configjoint -> fixedjoint with stone dragging, fixedjoint
 	may "rip" stone through the colliders...
 
 2)	Iterate_Down__Playing_Board() is broken...	
 	... to fix Iterate_Down__Playing_Board(), iterate **from the top** and not from the bottom!!
 
+
+** DEVELOPMENT ON HOLD **
+- last thing done: _Ammo.cs for impact flash via kinemaOp on impact with targetShield
 
 
 
@@ -20,9 +23,14 @@
 
 ... make ui progress bars square (or add mask)
 
-1) Improve the ammo->impact process
-	- create Ammo.cs for explosion on rigidbody collision/impact with item on target ship
-	- add a projector for explosion "decal" on impact
+... **floating combat text**
+	need to set up functional pipeline/code
+	show damage amounts on impact
+
+... ships idly hover
+	would need transform for default positions
+	maybe need enum for when to hover and when not to?
+	or just randomly add force and rotation in small amounts?
 
 *) Start working on scene for galactic map
    ... with planets in a solar system that can be selected to initiate each level
